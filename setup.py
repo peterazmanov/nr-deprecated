@@ -1,0 +1,9 @@
+from setuptools import setup
+setup(
+  name = 'nr.utils',
+  version = '0.0.1.dev',
+  author_name = 'Niklas Rosenstein',
+  author_email = 'rosensteinniklas@gmail.com',
+  license = 'MIT',
+  packages = ['nr.utils'],
+)
