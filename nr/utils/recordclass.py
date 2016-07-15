@@ -56,13 +56,30 @@ class recordclass(object):
     return '{0}('.format(type(self).__name__) + ', '.join(parts) + ')'
 
   def __iter__(self):
+    """
+    Iterate over the values of the record in order.
+    """
+
     for key in self.__slots__:
       yield getattr(self, key)
 
   def __len__(self):
+    """
+    Returns the number of slots in the record.
+    """
+
     return len(self.__slots__)
 
   def __getitem__(self, index_or_key):
+    """
+    Read the value of a slot by its index or name.
+
+    :param index_or_key:
+    :raise TypeError:
+    :raise IndexError:
+    :raise KeyError:
+    """
+
     if isinstance(index_or_key, int):
       return getattr(self, self.__slots__[index_or_key])
     elif isinstance(index_or_key, str):
@@ -73,6 +90,15 @@ class recordclass(object):
       raise TypeError('expected int or str')
 
   def __setitem__(self, index_or_key, value):
+    """
+    Set the value of a slot by its index or name.
+
+    :param index_or_key:
+    :raise TypeError:
+    :raise IndexError:
+    :raise KeyError:
+    """
+
     if isinstance(index_or_key, int):
       setattr(self, self.__slots__[index_or_key], value)
     elif isinstance(index_or_key, str):
@@ -83,13 +109,25 @@ class recordclass(object):
       raise TypeError('expected int or str')
 
   def items(self):
+    """
+    Iterator for the key-value pairs of the record.
+    """
+
     for key in self.__slots__:
       yield key, getattr(self, key)
 
   def keys(self):
+    """
+    Iterator for the member names of the record.
+    """
+
     return iter(self.__slots__)
 
   def values(self):
+    """
+    Iterator for the values of the object, like :meth:`__iter__`.
+    """
+
     for key in self.__slots__:
       yield getattr(self, key)
 
