@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 r"""
-:mod:`nr.enum` - Simple Python 2/3 compatible Enumeration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:mod:`nr.utils.enum` - Simple Python 2/3 compatible Enumeration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This module implements a simple framework for creating
 C-like enumerations in Python using classes. Simply
@@ -45,9 +45,9 @@ inherit from the ``Enumeration`` class.
   Traceback (most recent call last):
     File "test.py", line 10, in <module>
     Color(343)
-    File "C:\\repositories\\py-nr.enum\\nr\\enum.py", line 159, in __new__
+    File "C:\\repositories\\py-nr.utils\\nr\\utils\\enum.py", line 159, in __new__
     raise NoSuchEnumerationValue(cls.__name__, value)
-  nr.enum.NoSuchEnumerationValue: ('Color', 343)
+  nr.utils.enum.NoSuchEnumerationValue: ('Color', 343)
 
 If you want to disable that an invalid enumeration value
 will raise an error, a ``__fallback__`` value can be

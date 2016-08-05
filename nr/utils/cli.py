@@ -1,4 +1,4 @@
-# Copyright (c) 2014  Niklas Rosenstein
+# Copyright (c) 2014-2016  Niklas Rosenstein
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -137,7 +137,7 @@ class Response(object):
     self.returncode = process.returncode
 
   def __repr__(self):
-    return '<nr.cli.Response: [{0}]>'.format(self.returncode)
+    return '<nr.utils.cli.Response: [{0}]>'.format(self.returncode)
 
 
 class TimeoutError(Exception):

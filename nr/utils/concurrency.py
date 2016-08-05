@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Niklas Rosenstein
+# Copyright (c) 2015-2016  Niklas Rosenstein
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 '''
-`nr.concurrency` - Simplifying concurrency
-==========================================
+`nr.utils.concurrency` - Simplifying concurrency
+================================================
 '''
 
 __all__ = ['Job', 'ThreadPool', 'EventQueue', 'Synchronizable', 'Clock',
@@ -559,9 +559,9 @@ class ThreadPool(object):
 
   .. code-block:: python
 
-    with nr.concurrency.ThreadPool(5) as pool:
+    with nr.utils.concurrency.ThreadPool(5) as pool:
       jobs = dict([pool.submit(url_open, [url]), url] for url in URLS)
-      for job in nr.concurrency.as_completed(jobs):
+      for job in nr.utils.concurrency.as_completed(jobs):
         url = jobs[job]
         try:
           result = job.result
