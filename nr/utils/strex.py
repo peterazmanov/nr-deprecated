@@ -47,17 +47,33 @@ class Scanner(object):
   and keep track of the line and column numbers of each passed
   character. The Scanner will only tread line-feed as a newline.
 
-  @param text
+  :param text:
     The text to parse. Must be a `str` in Python 3 and may also be
     a `unicode` object in Python 2.
 
-  @attr text
-  @attr index The index in the text.
-  @attr lineno The current line number.
-  @attr colno The current column number.
-  @property cursor The current `Cursor` value.
-  @property char The current character, or an empty string/unicode
-    if the end of the text was reached. '''
+  .. attribute:: text
+
+  .. attribute:: index
+
+    The index in the text.
+
+  .. attribute:: lineno
+
+    The current line number.
+
+  .. attribute:: colno
+
+    The current column number.
+
+  .. attribute:: cursor
+
+    The current `Cursor` value.
+
+  .. attribute:: char
+
+    The current character, or an empty string/unicode if the end of
+    the text was reached.
+  '''
 
   def __init__(self, text):
     if not isinstance(text, string_types):
@@ -160,28 +176,39 @@ class Lexer(object):
   raises an `TokenizationError` instead of yielding an invalid
   `Token` object.
 
-  @param scanner The `Scanner` to use for lexing.
-  @param rules A list of `Rule` objects.
-  @param raise_invalid True if an exception should be raised when
+  :param scanner: The `Scanner` to use for lexing.
+  :param rules: A list of `Rule` objects.
+  :param raise_invalid: True if an exception should be raised when
     the stream can not be tokenized, False if it should just yield
     an invalid token and proceed with the next character.
 
-  @attr scanner
-  @attr rules
-  @attr rules_map A dictionary mapping the rule name to the rule
-    object. This is automatically built when the Lexer is created.
-    If the `rules` are updated in the lexer directly, `update()`
-    must be called.
-  @attr skippable_rules A list of skippable rules built from the
-    `rules` list. `update()` must be called if any of the rules
-    or rules list are modified.
-  @attr raise_invalid
-  @attr skip_rules A set of rule type IDs that will automatically
-    be skipped by the `next()` method.
-  @attr token The current `Token`. After the Lexer is created and
-    the `next()` method has not been called, the value of this
-    attribute is None. At the end of the input, the token is of
-    type `eof`.
+  .. attribute:: scanner
+
+  .. attribute:: rules
+
+  .. attribute:: rules_map
+
+    A dictionary mapping the rule name to the rule object. This is
+    automatically built when the Lexer is created. If the :attr:`rules`
+    are updated in the lexer directly, :meth:`update` must be called.
+
+  .. attribute:: skippable_rules
+
+    A list of skippable rules built from the :attr:`rules` list.
+    :meth:`update` must be called if any of the rules or rules list are modified.
+
+  .. attribute:: raise_invalid
+
+  .. attribute:: skip_rules
+
+    A set of rule type IDs that will automatically be skipped by the
+    :meth:`next` method.
+
+  .. attribute:: token
+  
+    The current `Token`. After the Lexer is created and :meth:`next`
+    method has not been called, the value of this attribute is None. At
+    the end of the input, the token is type :data:`eof`.
   '''
 
   def __init__(self, scanner, rules=None, raise_invalid=True):

@@ -18,14 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 r"""
-:mod:`nr.utils.enum` - Simple Python 2/3 compatible Enumeration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 This module implements a simple framework for creating
 C-like enumerations in Python using classes. Simply
 inherit from the ``Enumeration`` class.
 
-.. code-block:: python
+.. code:: python
 
   >>> class Color(enum.Enumeration):
   ...   red = 0
@@ -53,7 +50,7 @@ If you want to disable that an invalid enumeration value
 will raise an error, a ``__fallback__`` value can be
 specified on class-level.
 
-.. code-block:: python
+.. code:: python
 
   >>> class Color(enum.Enumeration):
   ...   red = 0
@@ -71,7 +68,7 @@ You can also iterate over an enumeration class. Note that
 the order of the items yielded is value-sorted and the order
 of declaration does not play a role.
 
-.. code-block:: python
+.. code:: python
 
   >>> class Color(enum.Enumeration):
   ...   red = 0
@@ -87,7 +84,7 @@ of declaration does not play a role.
 You can add data or actual methods to an enumeration
 class by wrapping it with the :class:`Data` class.
 
-.. code-block:: python
+.. code:: python
 
   class Color(enum.Enumeration):
     red = 0
@@ -136,7 +133,7 @@ class Data(object):
   enumeration that should not be converted and interpreted
   as an enumeration value.
 
-  .. code-block:: python
+  .. code:: python
 
     class Color(enum.Enumeration):
       red = 0

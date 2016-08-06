@@ -9,15 +9,14 @@ Welcome to nr.utils's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :glob:
+   :maxdepth: 1
 
-   nr
+   api/*
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
-

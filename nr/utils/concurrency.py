@@ -42,18 +42,12 @@ try:
 except ImportError:
   import Queue as queue
 
-## ===========================================================================
-## current_thread, main_thread
-## ===========================================================================
 
 from threading import current_thread
 
 main_thread = next(t for t in threading.enumerate()
   if isinstance(t, threading._MainThread))
 
-## ===========================================================================
-## Global Constants
-## ===========================================================================
 
 # Possible Job states.
 PENDING = 'pending'
@@ -66,9 +60,6 @@ EVENT_STARTED = 'started'
 EVENT_FINISHED = 'finished'
 EVENT_CANCELLED = 'cancelled'
 
-## ===========================================================================
-## Exceptions
-## ===========================================================================
 
 class InvalidStateError(Exception):
   ''' Raised by various `Job` methods. '''
@@ -85,12 +76,10 @@ class Timeout(Exception):
 class Empty(Exception):
   ''' Raised by `SynchronizedDeque.get()`. '''
 
-## ===========================================================================
-## Job, as_completed
-## ===========================================================================
 
 _Listener = collections.namedtuple('_Listener', 'callback once')
 ExceptionInfo = collections.namedtuple('ExceptionInfo', 'type value tb')
+
 
 class Job(object):
   '''
@@ -98,6 +87,23 @@ class Job(object):
   from any thread either synchronous or asynchronous (ie. in a
   different thread of execution). A Job can be cancelled at any time,
   but the implementation must handle the cancellation flag gracefully.
+
+  A Job can have the following states:
+
+  - ``PENDING``
+  - ``RUNNING``
+  - ``ERROR``
+  - ``SUCCESS``
+
+  A Job has the following events that can be listened to with the
+  `Job.add_listener()` or `Job.listen()` method:
+
+  - ``EVENT_STARTED``
+  - ``EVENT_FINISHED``
+  - ``EVENT_CANCELLED``
+
+  Note that ``EVENT_FINISHED`` is triggered even if ``EVENT_CANCELLED``
+  has already been triggered since a cancelled Job can also finish.
 
   :param target: A callable accepting the :class:`Job` instance as
     its the first and only argument.
@@ -109,23 +115,6 @@ class Job(object):
     Job will print exceptions occuring during the execution of the
     *target* callable. The exception is still saved in the
     :attr:`exception` property.
-
-  A Job can have the following states:
-
-  - `PENDING`
-  - `RUNNING`
-  - `ERROR`
-  - `SUCCESS`
-
-  A Job has the following events that can be listened to with the
-  `Job.add_listener()` or `Job.listen()` method:
-
-  - `EVENT_STARTED`
-  - `EVENT_FINISHED`
-  - `EVENT_CANCELLED`
-
-  Note that `EVENT_FINISHED` is triggered even if `EVENT_CANCELLED`
-  has already been triggered since a cancelled Job can also finish.
 
   .. attribute:: userdict
 
@@ -546,9 +535,6 @@ def as_completed(jobs):
     for job in finished:
       yield job
 
-## ===========================================================================
-## ThreadPool
-## ===========================================================================
 
 class ThreadPool(object):
   '''
@@ -734,9 +720,6 @@ class ThreadPool(object):
       for thread in self.__threads:
         thread.join()
 
-## ===========================================================================
-## EventQueue
-## ===========================================================================
 
 class EventQueue(object):
   '''
@@ -826,36 +809,10 @@ class EventQueue(object):
       self.events = collections.deque()
       return events
 
-## ===========================================================================
-## Synchronizable, synchronized, notify, notify_all, wait
-## ===========================================================================
 
 class Synchronizable(object):
   '''
-  This is a base class for objects that can be synchronized
-  using a condition variable. Use the `synchronized()` decorator
-  for instance methods to synchronize the full function call.
-
-  To interact with a `Synchronizable` instance, you can use its
-  `Synchronizable.condition` member directly or use the function-style
-  global functions `synchronized()`, `notify()`, `notify_all()` and
-  `wait()`. The latter is preferred due to the improved readability.
-  Compare:
-
-  .. code-block:: python
-
-    with synchronized(obj):
-      while not some_condition(obj):
-        wait(obj)
-      # do stuff
-      notify_all(obj)
-    # ------------------------------
-    with obj.condition:
-      while not some_condition(obj):
-        obj.condition.wait()
-      # do stuff
-      obj.condition.notify_all()
-
+  Base class for objects shared among threads.
   '''
 
   lock_type = staticmethod(threading.RLock)
@@ -868,61 +825,49 @@ class Synchronizable(object):
     return instance
 
 
-def synchronized(func_or_obj):
+def synchronized(obj):
   '''
-  Decorator or context manager for a `Synchronizable` instance. Apply
-  this function as a decorator to an instance method of a `Synchronizable`
-  subclass to synchronize the full function call. Use this function on
-  a `Synchronizable` instance to retrieve the condition variable and use
-  it in a with-context.
-
-  .. code-block:: python
-
-    class Package(Synchronizable):
-      @synchronized
-      def set_status(self, status):
-        # ...
-
-    with synchronized(obj):
-      # ...
-      obj.notify_all()
+  Synchronize access to *obj* or act as a decorator.
   '''
 
-  if hasattr(func_or_obj, 'condition'):
-    return func_or_obj.condition
-  elif callable(func_or_obj):
-    @functools.wraps(func_or_obj)
+  if hasattr(obj, 'condition'):
+    return obj.condition
+  elif callable(obj):
+    @functools.wraps(obj)
     def wrapper(self, *args, **kwargs):
       with self.condition:
-        return func_or_obj(self, *args, **kwargs)
+        return obj(self, *args, **kwargs)
     return wrapper
   else:
     raise TypeError('expected Synchronizable instance or callable to decorate')
 
 
 def notify(obj):
-  ''' Call `condition.notify()` on a `Synchronizable` object. '''
+  '''
+  Notify a thread waiting for *obj*.
+  '''
 
   return obj.condition.notify()
 
 
 def notify_all(obj):
-  ''' Call `condition.notify_all()` on a `Synchronizable` object. '''
+  '''
+  Notify all threads waiting for *obj*.
+  '''
 
   return obj.condition.notify_all()
 
 
 def wait(obj, timeout=None):
-  ''' Call `condition.wait()` on a `Synchronizable` object. '''
+  '''
+  Wait for *obj* until notified.
+  '''
 
   if timeout is None:
     return obj.condition.wait()
   else:
     return obj.condition.wait(timeout)
 
-## ===========================================================================
-## Collections
-## ===========================================================================
 
 class SynchronizedDeque(Synchronizable):
   ''' Thread-safe wrapper for the `collections.deque`. *New in 0.9.6*. '''
@@ -1062,9 +1007,6 @@ class SynchronizedDeque(Synchronizable):
           raise self.Timeout
         wait(self, timeout - t_delta)
 
-## ===========================================================================
-## Other utilities
-## ===========================================================================
 
 class Clock(object):
   '''
