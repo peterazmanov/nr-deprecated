@@ -132,7 +132,7 @@ class recordclass(object):
       yield getattr(self, key)
 
   def _asdict(self):
-    return {k: getattr(self, k) for k in self.__slots__}
+    return dict((k, getattr(self, k)) for k in self.__slots__)
 
   @classmethod
   def new(cls, __name, __fields, **defaults):
