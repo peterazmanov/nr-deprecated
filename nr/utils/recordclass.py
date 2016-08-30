@@ -108,6 +108,16 @@ class recordclass(object):
     else:
       raise TypeError('expected int or str')
 
+  def __eq__(self, other):
+    for key in self.__slots__:
+      try:
+        other_value = getattr(other, key)
+      except AttributeError:
+        return False
+      if getattr(self, key) != other_value:
+        return False
+    return True
+
   def items(self):
     """
     Iterator for the key-value pairs of the record.
