@@ -1,0 +1,3 @@
+versionPatterns:
+  "setup.py": "version = '$VERSION'",
+  "nr/utils/__init__.py": "__version__ = '$VERSION'"
