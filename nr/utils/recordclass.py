@@ -118,6 +118,21 @@ class recordclass(object):
         return False
     return True
 
+  def __setattr__(self, name, value):
+    if name in self.__slots__:
+      setter = getattr(self, '_set_' + name, None)
+      if callable(setter):
+        setter(value)
+        return
+    super(recordclass, self).__setattr__(name, value)
+
+  def __getattribute__(self, name):
+    if name != '__slots__' and name in self.__slots__:
+      getter = getattr(self, '_get_' + name, None)
+      if callable(getter):
+        return getter()
+    return super(recordclass, self).__getattribute__(name)
+
   def items(self):
     """
     Iterator for the key-value pairs of the record.
