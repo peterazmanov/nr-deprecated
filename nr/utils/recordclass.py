@@ -37,6 +37,9 @@ class recordclass(object):
 
   def __init__(self, *args, **kwargs):
     defaults = getattr(self, '__defaults__', None) or {}
+    if len(args) > len(self.__slots__):
+      msg = '__init__() takes {0} positional arguments but {1} were given'
+      raise TypeError(msg.format(len(self.__slots__), len(args)))
     for key, arg in zip(self.__slots__, args):
       if key in kwargs:
         msg = 'multiple values for argument {0!r}'.format(key)
@@ -45,11 +48,16 @@ class recordclass(object):
     for key, arg in kwargs.items():
       setattr(self, key, arg)
     for key in self.__slots__:
-      if not hasattr(self, key):
+      if key not in kwargs:
         if key in defaults:
           setattr(self, key, defaults[key])
         else:
           raise TypeError('missing argument {0!r}'.format(key))
+      else:
+        kwargs.pop(key)
+    if kwargs:
+      msg = '__init__() got an unexpected keyword argument {0!r}'
+      raise TypeError(msg.format(next(iter(kwargs))))
 
   def __repr__(self):
     parts = ['{0}={1!r}'.format(k, v) for k, v in self.items()]
