@@ -43,3 +43,5 @@ def make_singleton(name, type_name=None, as_bool=True):
     type_name = name + 'Type'
   singleton_class.__name__ = type_name
   return singleton_class()
+
+Default = make_singleton('Default')
