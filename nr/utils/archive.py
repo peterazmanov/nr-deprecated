@@ -126,7 +126,6 @@ def _zip_opener(file, mode, options):
   return obj
 
 def _tar_opener(file, mode, options, _tar_mode):
-  print(">>", file, mode, options)
   kwargs = {'bufsize': options['bufsize']} if 'bufsize' in options else {}
   return tarfile.open(fileobj=file, mode='%s:%s' % (mode, _tar_mode), **kwargs)
 
