@@ -12,6 +12,7 @@ Contents:
    :glob:
    :maxdepth: 1
 
+   self
    api/*
 
 

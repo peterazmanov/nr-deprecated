@@ -44,4 +44,7 @@ def make_singleton(name, type_name=None, as_bool=True):
   singleton_class.__name__ = type_name
   return singleton_class()
 
+#: A singleton object like :const:`None`, :const:`True` or :const:`False`.
+#: Can be used to denote the default value of an argument when :const:`None`
+#: is an accepted non-default value.
 Default = make_singleton('Default')

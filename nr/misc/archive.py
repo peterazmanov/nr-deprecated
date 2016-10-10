@@ -28,18 +28,18 @@ openers = {}
 
 def register_opener(suffix, opener=None):
   """
-  Register a callback that opens an archive with the specified #suffix.
-  The object returned by the #opener must implement the #tarfile.Tarfile
-  interface.
+  Register a callback that opens an archive with the specified *suffix*.
+  The object returned by the *opener* must implement the
+  :class:`tarfile.Tarfile` interface.
 
-  This function can be used as a decorator when #opener is None.
+  This function can be used as a decorator when *opener* is None.
 
   The opener must accept the following arguments:
 
-  @param file A file-like object to read the archive data from.
-  @param mode The mode to open the file in. Valid values are `'w'`,
+  :param file: A file-like object to read the archive data from.
+  :param mode: The mode to open the file in. Valid values are `'w'`,
     `'r'` and `'a'`.
-  @param options A dictionary with possibly additional arguments.
+  :param options: A dictionary with possibly additional arguments.
   """
 
   if opener is None:
@@ -53,9 +53,9 @@ def register_opener(suffix, opener=None):
 
 def get_opener(filename):
   """
-  Finds a matching opener that is registed with #register_opener()
-  and returns a tuple `(suffix, opener)`. If there is no opener that
-  can handle this filename, #UnknownArchive is raised.
+  Finds a matching opener that is registed with :func:`register_opener`
+  and returns a tuple ``(suffix, opener)``. If there is no opener that
+  can handle this filename, :class:`UnknownArchive` is raised.
   """
 
   for suffix, opener in openers.items():
@@ -65,16 +65,16 @@ def get_opener(filename):
 
 def open(filename=None, file=None, mode='r', suffix=None, options=None):
   """
-  Opens the archive at the specified #filename or from the file-like
-  object #file using the appropriate opener. A specific opener can
-  be specified by passing the #suffix argument.
+  Opens the archive at the specified *filename* or from the file-like
+  object *file* using the appropriate opener. A specific opener can
+  be specified by passing the *suffix* argument.
 
-  @param filename A filename to open the archive from.
-  @param file A file-like object as source/destination.
-  @param mode The mode to open the archive in.
-  @param suffix Possible override for the #filename suffix. Must be
-    specified when #file is passed instead of #filename.
-  @param options A dictionary that will be passed to the opener
+  :param filename: A filename to open the archive from.
+  :param file: A file-like object as source/destination.
+  :param mode: The mode to open the archive in.
+  :param suffix: Possible override for the *filename* suffix. Must be
+    specified when *file* is passed instead of *filename*.
+  :param options: A dictionary that will be passed to the opener
     with which additional options can be specified.
   """
 

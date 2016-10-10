@@ -1,10 +1,10 @@
-:mod:`nr.utils.strex` --- String procesing & parsing
+:mod:`nr.parse.strex` --- String procesing & parsing
 ====================================================
 
-.. module:: nr.utils.strex
+.. module:: nr.parse.strex
   :synopsis: String procesing & parsing
 
-:mod:`~nr.utils.strex` is a simple library to tokenize and parse small
+:mod:`~nr.parse.strex` is a simple library to tokenize and parse small
 or even complex languages. It has been developed specifically for the
 recursive decent parser technique, although it might work well with other
 parsing techniques as well.

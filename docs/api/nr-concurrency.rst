@@ -1,10 +1,10 @@
-:mod:`nr.utils.concurrency` --- Pure simplicity for concurrent applications
-===========================================================================
+:mod:`nr.concurrency` --- Pure simplicity for concurrent applications
+=====================================================================
 
-.. module:: nr.utils.concurrency
+.. module:: nr.concurrency
   :synopsis: Pure simplicity for concurrent applications
 
-The :mod:`~nr.utils.concurrency` module provides an easy to use toolkit
+The :mod:`~nr.concurrency` module provides an easy to use toolkit
 for developing concurrent applications.
 
 Interacting with Synchronizables

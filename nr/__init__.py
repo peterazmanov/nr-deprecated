@@ -18,9 +18,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-try:
-  import pkg_resources
-  pkg_resources.declare_namespace(__name__)
-except ImportError:
-  import pkgutil
-  __path__ = pkgutil.extend_path(__path__, __name__)
+__author__ = 'Niklas Rosenstein <rosensteinniklas@gmail.com>'
+__version__ = '1.2'

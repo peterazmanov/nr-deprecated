@@ -1,6 +1,6 @@
-:mod:`nr.utils.recordclass` --- Mutable namedtuple
+:mod:`nr.types.recordclass` --- Mutable namedtuple
 ==================================================
 
-.. automodule:: nr.utils.recordclass
+.. automodule:: nr.types.recordclass
   :synopsis: Mutable namedtuple
   :members:
