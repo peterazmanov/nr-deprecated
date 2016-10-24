@@ -23,7 +23,7 @@ import os
 
 from functools import partial
 from pip.req import parse_requirements
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # parse_requirements() interface has changed in Pip 6.0
 if pip.__version__ >= '6.0':
@@ -50,6 +50,6 @@ setup(
   url = 'https://github.com/NiklasRosenstein/py-nr',
   author = 'Niklas Rosenstein',
   author_email = 'rosensteinniklas@gmail.com',
-  packages = ['nr'],
+  packages = find_packages(),
   install_requires = [str(x.req) for x in parse_requirements('requirements.txt')],
 )
