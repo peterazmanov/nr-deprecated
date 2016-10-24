@@ -20,6 +20,7 @@
 
 import pip
 import os
+import sys
 
 from functools import partial
 from pip.req import parse_requirements
