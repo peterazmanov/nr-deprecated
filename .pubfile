@@ -1,5 +1,7 @@
 versionPatterns:
   "setup.py": "version = '$VERSION'",
   "nr/__init__.py": "__version__ = '$VERSION'"
-  "docs/conf.py": "version = '$VERSION'"
-  "docs/conf.py": "release = '$VERSION'"
+  "docs/conf.py": [
+    "version = '$VERSION'"
+    "release = '$VERSION'"
+  ]
