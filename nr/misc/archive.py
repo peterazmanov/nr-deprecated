@@ -114,6 +114,45 @@ def open(filename=None, file=None, mode='r', suffix=None, options=None):
       file.close()
     raise
 
+def extract(archive, directory, unpack_single_dir=False):
+  """
+  Extract the contents of *archive* to the specified *directory*. This
+  function ensures that no file is extracted outside of the target directory
+  (which can theoretically happen if the arcname is not relative or points
+  to a parent directory).
+
+  :param archive: The filename of an archive or an already opened archive.
+  :param directory: Path to the directory to unpack the contents to.
+  :param unpack_single_dir: If this is True and if the archive contains only
+    a single top-level directory, its contents will be placed directly into
+    the target *directory*.
+  """
+
+  if isinstance(archive, str):
+    with open(archive) as archive:
+      return extract(archive, directory, unpack_single_dir)
+
+  names = archive.namelist()
+
+  # Find out if we have only one top-level directory.
+  toplevel_dirs = [x for x in names if x.count('/') == 1 and x.endswith('/')]
+  if unpack_single_dir and len(toplevel_dirs) == 1:
+    stripdir = toplevel_dirs[0]
+  else:
+    stripdir = None
+
+  for name in names:
+    if name.startswith('..') or name.startswith('/') or os.path.isabs(name):
+      continue
+    if name.endswith('/'):
+      continue
+    if stripdir:
+      new_name = name[len(stripdir):]
+    else:
+      new_name = name
+    archive.extract(name, os.path.join(directory, new_name))
+
+
 class Error(Exception):
   pass
 
@@ -121,7 +160,17 @@ class UnknownArchive(Exception):
   pass
 
 def _zip_opener(file, mode, options):
-  obj = zipfile.ZipFile(file, mode, int(options.get('compression')))
+  compression = options.get('compression', zipfile.ZIP_DEFLATED)
+  if compression == 'deflated':
+    compression = zipfile.ZIP_DEFLATED
+  elif compression == 'stored':
+    compression = zipfile.ZIP_STORED
+  elif compression == 'bzip2':
+    compression = zipfile.ZIP_BZIP2
+  elif compression == 'lzma':
+    compression = zipfile.ZIP_LZMA
+
+  obj = zipfile.ZipFile(file, mode, compression)
   obj.add = obj.write
   return obj
 
