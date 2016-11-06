@@ -76,6 +76,8 @@ def open(filename=None, file=None, mode='r', suffix=None, options=None):
     specified when *file* is passed instead of *filename*.
   :param options: A dictionary that will be passed to the opener
     with which additional options can be specified.
+  :return: An object that represents the archive and follows the
+    interface of the :class:`tarfile.TarFile` class.
   """
 
   if mode not in ('r', 'w', 'a'):
@@ -132,12 +134,16 @@ def extract(archive, directory, unpack_single_dir=False):
     with open(archive) as archive:
       return extract(archive, directory, unpack_single_dir)
 
-  names = archive.namelist()
+  names = archive.getnames()
 
   # Find out if we have only one top-level directory.
-  toplevel_dirs = [x for x in names if x.count('/') == 1 and x.endswith('/')]
+  toplevel_dirs = set()
+  for name in names:
+    parts = name.split('/')
+    if len(parts) > 1:
+      toplevel_dirs.add(parts[0])
   if unpack_single_dir and len(toplevel_dirs) == 1:
-    stripdir = toplevel_dirs[0]
+    stripdir = next(iter(toplevel_dirs)) + '/'
   else:
     stripdir = None
 
@@ -172,6 +178,7 @@ def _zip_opener(file, mode, options):
 
   obj = zipfile.ZipFile(file, mode, compression)
   obj.add = obj.write
+  obj.getnames = obj.namelist
   return obj
 
 def _tar_opener(file, mode, options, _tar_mode):
