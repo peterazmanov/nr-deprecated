@@ -20,6 +20,7 @@
 
 import builtins
 import os
+import shutil
 import tarfile
 import zipfile
 from functools import partial
@@ -153,11 +154,16 @@ def extract(archive, directory, unpack_single_dir=False):
     if name.endswith('/'):
       continue
     if stripdir:
-      new_name = name[len(stripdir):]
+      filename = name[len(stripdir):]
     else:
-      new_name = name
-    archive.extract(name, os.path.join(directory, new_name))
-
+      filename = name
+    filename = os.path.join(directory, filename)
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+      os.makedirs(dirname)
+    with builtins.open(filename, 'wb') as dst:
+      with archive.extractfile(name) as src:
+        shutil.copyfileobj(src, dst)
 
 class Error(Exception):
   pass
@@ -179,6 +185,7 @@ def _zip_opener(file, mode, options):
   obj = zipfile.ZipFile(file, mode, compression)
   obj.add = obj.write
   obj.getnames = obj.namelist
+  obj.extractfile = obj.open
   return obj
 
 def _tar_opener(file, mode, options, _tar_mode):
