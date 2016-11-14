@@ -117,7 +117,7 @@ def open(filename=None, file=None, mode='r', suffix=None, options=None):
       file.close()
     raise
 
-def extract(archive, directory, unpack_single_dir=False):
+def extract(archive, directory, suffix=None, unpack_single_dir=False):
   """
   Extract the contents of *archive* to the specified *directory*. This
   function ensures that no file is extracted outside of the target directory
@@ -132,8 +132,8 @@ def extract(archive, directory, unpack_single_dir=False):
   """
 
   if isinstance(archive, str):
-    with open(archive) as archive:
-      return extract(archive, directory, unpack_single_dir)
+    with open(archive, suffix=suffix) as archive:
+      return extract(archive, directory, None, unpack_single_dir)
 
   names = archive.getnames()
 
