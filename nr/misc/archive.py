@@ -155,15 +155,26 @@ def extract(archive, directory, unpack_single_dir=False):
       continue
     if stripdir:
       filename = name[len(stripdir):]
+      if not filename:
+        continue
     else:
       filename = name
-    filename = os.path.join(directory, filename)
-    dirname = os.path.dirname(filename)
-    if not os.path.exists(dirname):
-      os.makedirs(dirname)
-    with builtins.open(filename, 'wb') as dst:
-      with archive.extractfile(name) as src:
+
+    src = archive.extractfile(name)
+    if not src:
+      continue
+
+    # TODO: Also extract file metadata.
+
+    try:
+      filename = os.path.join(directory, filename)
+      dirname = os.path.dirname(filename)
+      if not os.path.exists(dirname):
+        os.makedirs(dirname)
+      with builtins.open(filename, 'wb') as dst:
         shutil.copyfileobj(src, dst)
+    finally:
+      src.close()
 
 class Error(Exception):
   pass
