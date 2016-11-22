@@ -117,7 +117,8 @@ def open(filename=None, file=None, mode='r', suffix=None, options=None):
       file.close()
     raise
 
-def extract(archive, directory, suffix=None, unpack_single_dir=False):
+def extract(archive, directory, suffix=None, unpack_single_dir=False,
+    check_extract_file=None, progress_callback=None):
   """
   Extract the contents of *archive* to the specified *directory*. This
   function ensures that no file is extracted outside of the target directory
@@ -133,8 +134,11 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False):
 
   if isinstance(archive, str):
     with open(archive, suffix=suffix) as archive:
-      return extract(archive, directory, None, unpack_single_dir)
+      return extract(archive, directory, None, unpack_single_dir,
+          check_extract_file, progress_callback)
 
+  if progress_callback:
+    progress_callback(-1, 0, None)
   names = archive.getnames()
 
   # Find out if we have only one top-level directory.
@@ -148,8 +152,12 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False):
   else:
     stripdir = None
 
-  for name in names:
+  for index, name in enumerate(names):
+    if progress_callback:
+      progress_callback(index + 1, len(names), name)
     if name.startswith('..') or name.startswith('/') or os.path.isabs(name):
+      continue
+    if check_extract_file and not check_extract_file(name):
       continue
     if name.endswith('/'):
       continue
@@ -175,6 +183,8 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False):
         shutil.copyfileobj(src, dst)
     finally:
       src.close()
+
+  progress_callback(len(names), len(names), None)
 
 class Error(Exception):
   pass
