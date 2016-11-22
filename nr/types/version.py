@@ -295,6 +295,8 @@ class VersionCriteria(object):
       self.criteria = [_SingleCriteria(x.strip()) for x in items]
     else:
       raise TypeError('value: expected VersionCriteria or str')
+    if not self.criteria:
+      raise ValueError('invalid VersionCriteria: {!r}'.format(value))
 
   def __str__(self):
     return ' || '.join(map(str, self.criteria))

@@ -64,6 +64,9 @@ def test_version_attr():
   assert ver == Version('2.40.10-gammaray5')
 
 def test_critera():
+  with assert_raises(ValueError) as exc:
+    VersionCriteria('')
+
   assert VersionCriteria('~ 1.0')(Version('1.0.1'))
   assert VersionCriteria('~ 1.0')(Version('1.0.6'))
   assert VersionCriteria('~ 1.0')(Version('1.0.19-alpha'))
