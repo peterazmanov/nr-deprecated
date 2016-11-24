@@ -153,6 +153,8 @@ opstackd = _build_opstackd()
 def get_stackdelta(op):
   """
   Returns the number of elements that the instruction *op* adds to the stack.
+
+  :raise KeyError: If the instruction *op* is not supported.
   """
 
   res = opstackd[op.opname]
@@ -198,7 +200,11 @@ def get_assigned_name(frame):
     elif state == MATCHED:
       # Update the would-be size of the stack after this instruction.
       # If we're at zero, we found the last instruction of the expression.
-      stacksize += get_stackdelta(op)
+      try:
+        stacksize += get_stackdelta(op)
+      except KeyError:
+        raise RuntimeError('could not determined assigned name, instruction '
+            '{} is not supported'.format(op.opname))
       if stacksize == 0:
         if op.opname not in ('STORE_NAME', 'STORE_ATTR', 'STORE_GLOBAL', 'STORE_FAST'):
           raise ValueError('expression is not assigned or branch is not first part of the expression')
