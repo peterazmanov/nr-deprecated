@@ -19,4 +19,4 @@
 # THE SOFTWARE.
 
 __author__ = 'Niklas Rosenstein <rosensteinniklas@gmail.com>'
-__version__ = '1.3.4'
+__version__ = '1.3.5'
