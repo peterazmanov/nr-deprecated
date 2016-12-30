@@ -61,6 +61,10 @@ generate:
 - types/version.md:
   - nr.types.version.Version
   - nr.types.version.VersionCriteria
+- py/bytecode.md:
+  - nr.py.bytecode:
+    - nr.py.bytecode.get_stackdelta
+    - nr.py.bytecode.get_assigned_name
 pages:
 - Home: index.md << ../README.md
 - Concurrency API:
@@ -77,3 +81,5 @@ pages:
   - Recordclass: types/recordclass.md
   - Singleton: types/singleton.md
   - Semantic Versioning: types/version.md
+- Python Internals:
+  - nr.py.bytecode: py/bytecode.md

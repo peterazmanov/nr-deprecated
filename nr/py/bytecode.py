@@ -27,10 +27,10 @@ import sys
 
 def _build_opstackd():
   """
-  Builds a dictionary that maps the name of an op-code to the
-  number of elemnts it adds to the stack when executed. For some
-  opcodes, the dictionary may contain a function which requires the
-  :class:`dis.Instruction` object to determine the actual value.
+  Builds a dictionary that maps the name of an op-code to the number of elemnts
+  it adds to the stack when executed. For some opcodes, the dictionary may
+  contain a function which requires the #dis.Instruction object to determine
+  the actual value.
 
   The dictionary mostly only contains information for instructions
   used in expressions.
@@ -154,7 +154,11 @@ def get_stackdelta(op):
   """
   Returns the number of elements that the instruction *op* adds to the stack.
 
-  :raise KeyError: If the instruction *op* is not supported.
+  # Arguments
+  op (dis.Instruction): The instruction to retrieve the stackdelta value for.
+
+  # Raises
+  KeyError: If the instruction *op* is not supported.
   """
 
   res = opstackd[op.opname]
@@ -164,23 +168,23 @@ def get_stackdelta(op):
 
 def get_assigned_name(frame):
   """
-  Checks the bytecode of *frame* to find the name of the variable
-  a result is being assigned to and returns that name. Returns the full
-  left operand of the assignment. Raises a :class:`ValueError` if the variable
-  name could not be retrieved from the bytecode (eg. if an unpack sequence
-  is on the left side of the assignment).
+  Checks the bytecode of *frame* to find the name of the variable a result is
+  being assigned to and returns that name. Returns the full left operand of the
+  assignment. Raises a #ValueError if the variable name could not be retrieved
+  from the bytecode (eg. if an unpack sequence is on the left side of the
+  assignment).
 
-  .. note::
+  > **Known Limitations**:  The expression in the *frame* from which this
+  > function is called must be the first part of that expression. For
+  > example, `foo = [get_assigned_name(get_frame())] + [42]` works,
+  > but `foo = [42, get_assigned_name(get_frame())]` does not!
 
-    Known Limitations: The expression in the *frame* from which this
-    function is called must be the first part of that expression. For
-    example, ``foo = [get_assigned_name(get_frame())] + [42]`` works,
-    but ``foo = [42, get_assigned_name(get_frame())]`` does not!
+  ```python
+  >>> var = get_assigned_name(sys._getframe())
+  >>> assert var == 'var'
+  ```
 
-  .. code:: python
-
-    >>> var = get_assigned_name(sys._getframe())
-    >>> assert var == 'var'
+  __Available in Python 3.4, 3.5__
   """
 
   SEARCHING, MATCHED = 1, 2
