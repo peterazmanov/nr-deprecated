@@ -42,12 +42,18 @@ generate:
     - nr.concurrency.ThreadPool.shutdown
 - concurrency/eventqueue.md:
   - nr.concurrency.EventQueue
+- concurrency/utils.md:
+  - nr.concurrency.Clock:
+    - nr.concurrency.Clock.sleep
+  - nr.concurrency.split_list_by
+  - nr.concurrency.reraise
 pages:
 - Home: index.md << ../README.md
 - Concurrency API:
   - nr.concurrency: concurrency/index.md
   - Synchronizable: concurrency/synchronizable.md
-  - Job API: concurrency/job.md
-  - SynchronizedDeque: concurrency/syncdeque.md
+  - Job: concurrency/job.md
   - ThreadPool: concurrency/threadpool.md
+  - SynchronizedDeque: concurrency/syncdeque.md
   - EventQueue: concurrency/eventqueue.md
+  - Utils: concurrency/utils.md

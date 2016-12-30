@@ -676,6 +676,9 @@ def as_completed(jobs):
       yield job
 
 
+# ThreadPool API
+# ============================================================================
+
 class ThreadPool(object):
   """
   This class represents a pool of threads that can process jobs up to a certain
@@ -883,6 +886,9 @@ class ThreadPool(object):
         thread.join()
 
 
+# EventQueue API
+# ============================================================================
+
 class EventQueue(object):
   '''
   This class represents a collection of events that can then be
@@ -972,9 +978,8 @@ class EventQueue(object):
       return events
 
 
-
-class Empty(Exception):
-  ''' Raised by `SynchronizedDeque.get()`. '''
+# SynchronizedDeque API
+# ============================================================================
 
 class SynchronizedDeque(Synchronizable):
   """
@@ -1132,16 +1137,20 @@ class SynchronizedDeque(Synchronizable):
       raise Timeout
 
 
-class Clock(object):
-  '''
-  This class is a utility to partition a main loop into chunks at
-  a fixed framerate. This is useful for Game/UI main loops.
+# Utils
+# ============================================================================
 
-  :param seconds: The number of seconds to wait for each pass. Can
-    be omitted if *fps* is specified.
-  :param fps: The frame rate for the clock. Can be omitted if *seconds*
-    is specified.
-  '''
+class Clock(object):
+  """
+  This class is a utility to partition a main loop into chunks at a fixed
+  framerate. This is useful for Game/UI main loops.
+
+  # Parameters
+  seconds (number): The number of seconds to wait for each pass. Can be omitted
+    if *fps* is specified instead.
+  fps (number): The frame rate for the clock. Can be omitted if *seconds*
+    is specified instead.
+  """
 
   def __init__(self, seconds=None, fps=None):
     if seconds is not None:
@@ -1150,25 +1159,24 @@ class Clock(object):
       seconds = 1.0 / float(fps)
     else:
       raise ValueError('seconds or fps must be specified')
-    super(Clock, self).__init__()
     self.seconds = seconds
     self.last = -1
 
   def sleep(self):
-    '''
-    Sleeps until the interval has passed since the last time this
-    function was called. This is a synonym for `__call__()`. The first
-    time the function is called will return immediately and not block.
-    Therefore, it is important to put the call at the beginning of the
-    timed block, like this:
+    """
+    Sleeps until the interval has passed since the last time this function was
+    called. This is a synonym for #__call__(). The first time the function is
+    called will return immediately and not block. Therefore, it is important to
+    put the call at the beginning of the timed block, like this:
 
-    .. code-block:: python
-
-      clock = Clock(fps=50)
-      while True:
-        clock.sleep()
-        # Processing ...
-    '''
+    # Example
+    ```python
+    clock = Clock(fps=50)
+    while True:
+      clock.sleep()
+      # Processing ...
+    ```
+    """
 
     current = time.time()
     if self.last < 0:
@@ -1184,11 +1192,10 @@ class Clock(object):
 
 
 def split_list_by(lst, key):
-  '''
-  Splits a list by the callable *key* where a negative result will
-  cause the item to be put in the first list and a positive into the
-  second list.
-  '''
+  """
+  Splits a list by the callable *key* where a negative result will cause the
+  item to be put in the first list and a positive into the second list.
+  """
 
   first, second = [], []
   for item in lst:
@@ -1200,7 +1207,7 @@ def split_list_by(lst, key):
 
 
 def reraise(tpe, value, tb=None):
-  ''' Reraise an exception from an exception info tuple. '''
+  " Reraise an exception from an exception info tuple. "
 
   Py3 = (sys.version_info[0] == 3)
   if value is None:
