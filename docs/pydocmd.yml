@@ -10,7 +10,17 @@ generate:
   - nr.concurrency.notify
   - nr.concurrency.notify_all
 - concurrency/job.md:
-  - nr.concurrency.Job
+  - nr.concurrency.Job:
+    - nr.concurrency.Job.state
+    - nr.concurrency.Job.result
+    - nr.concurrency.Job.finished
+    - nr.concurrency.Job.exception
+    - nr.concurrency.Job.cancelled
+    - nr.concurrency.Job.cancel
+    - nr.concurrency.Job.add_listener
+    - nr.concurrency.Job.start
+    - nr.concurrency.Job.run
+    - nr.concurrency.Job.factory
   - nr.concurrency.EventQueue
 pages:
 - Home: index.md << ../README.md
