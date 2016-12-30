@@ -1,0 +1,20 @@
+site_name: Welcome to pydoc-markdown
+repo_url: https://github.com/NiklasRosenstein/py-nr
+generate:
+- concurrency/index.md:
+  - nr.concurrency
+- concurrency/synchronizable.md:
+  - nr.concurrency.Synchronizable
+  - nr.concurrency.synchronized
+  - nr.concurrency.wait
+  - nr.concurrency.notify
+  - nr.concurrency.notify_all
+- concurrency/job.md:
+  - nr.concurrency.Job
+  - nr.concurrency.EventQueue
+pages:
+- Home: index.md << ../README.md
+- Concurrency API:
+  - nr.concurrency: concurrency/index.md
+  - Synchronizable: concurrency/synchronizable.md
+  - Job API: concurrency/job.md

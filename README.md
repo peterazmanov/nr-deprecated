@@ -1,28 +1,13 @@
-A collection of small Python libraries and common classes/functions.
+# py-nr
 
-- `nr.parse`: Parsing related libraries
-  - `gitignore`: Parse `.gitignore` files and match them against files
-  - `strex`: String processing and tokenization library
-- `nr.py`: Python internals related libraries
-  - `bytecode`: Functionality that messes with Python bytecode
-- `nr.types`: New types or type related functionality
-  - `enum`: Python 2/3 compatible enumerations
-  - `recordclass`: Mutable `namedtuple`
-  - `singleton`: Create singletons
-  - `version`: Semantic versioning and version matching
-- `nr.misc`: Miscallenous utilities
-  - `archive`
-  - `cli`
-- `nr.concurrency`: Library for concurrent applications (future, event queues)
+A wide variety of Python utilities for various applications. The contents of
+this library is mainly composed of code that I developed for functionality that
+I needed in Cinema 4D plugins, though only little is actually restricted to
+Cinema 4D.
 
-### Requirements
+The library is compatible with Python 2 and 3 for the most part. It does not
+require any dependencies.
 
-None. All built with Python standard library tools.
+__Run Tests__:
 
-### Run tests
-
-    nosetests nr.utils
-
-### License
-
-MIT
+    nosetests nr
