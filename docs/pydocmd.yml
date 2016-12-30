@@ -7,6 +7,7 @@ generate:
   - nr.concurrency.Synchronizable
   - nr.concurrency.synchronized
   - nr.concurrency.wait
+  - nr.concurrency.wait_for_condition
   - nr.concurrency.notify
   - nr.concurrency.notify_all
 - concurrency/job.md:
@@ -21,6 +22,25 @@ generate:
     - nr.concurrency.Job.start
     - nr.concurrency.Job.run
     - nr.concurrency.Job.factory
+- concurrency/syncdeque.md:
+  - nr.concurrency.SynchronizedDeque:
+    - nr.concurrency.SynchronizedDeque.append
+    - nr.concurrency.SynchronizedDeque.appendleft
+    - nr.concurrency.SynchronizedDeque.pop
+    - nr.concurrency.SynchronizedDeque.popleft
+    - nr.concurrency.SynchronizedDeque.get
+    - nr.concurrency.SynchronizedDeque.wait
+    - nr.concurrency.SynchronizedDeque.snapshot
+- concurrency/threadpool.md:
+  - nr.concurrency.ThreadPool:
+    - nr.concurrency.ThreadPool.submit
+    - nr.concurrency.ThreadPool.pending_jobs
+    - nr.concurrency.ThreadPool.current_jobs
+    - nr.concurrency.ThreadPool.clear
+    - nr.concurrency.ThreadPool.cancel_all
+    - nr.concurrency.ThreadPool.wait
+    - nr.concurrency.ThreadPool.shutdown
+- concurrency/eventqueue.md:
   - nr.concurrency.EventQueue
 pages:
 - Home: index.md << ../README.md
@@ -28,3 +48,6 @@ pages:
   - nr.concurrency: concurrency/index.md
   - Synchronizable: concurrency/synchronizable.md
   - Job API: concurrency/job.md
+  - SynchronizedDeque: concurrency/syncdeque.md
+  - ThreadPool: concurrency/threadpool.md
+  - EventQueue: concurrency/eventqueue.md

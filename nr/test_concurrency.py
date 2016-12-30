@@ -18,10 +18,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from nr.concurrency import Job, as_completed
+from nr.concurrency import *
 from time import sleep
 from nose.tools import *
 
+# Test Synchronizable
+# ============================================================================
+
+def test_wait_for_condition():
+  obj = Synchronizable()
+  obj.value = 0
+  cond = lambda obj: obj.value == 10
+
+  @Job.factory()
+  def increment(job, time_interval):
+    while not job.cancelled:
+      with synchronized(obj):
+        obj.value += 1
+        notify_all(obj)
+      sleep(time_interval)
+
+  job = increment(0.01)
+  try:
+    assert_equals(wait_for_condition(obj, cond), True)
+  finally:
+    job.cancel()
+    obj.value = 0
+
+  job = increment(0.05)
+  try:
+    assert_equals(wait_for_condition(obj, cond, 0.2), False)
+    assert_equals(wait_for_condition(obj, cond, 0.5), True)
+  finally:
+    job.cancel()
+
+
+# Test Job
+# ============================================================================
 
 def worker(s, v):
   sleep(s)

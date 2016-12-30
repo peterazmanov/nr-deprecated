@@ -25,7 +25,6 @@ multithreading, but to enable writing multitask applications with ease.
 Compatible with Python 2 and 3.
 
 # Example
-
 ```python
 from nr.concurrency import Job, as_completed
 from requests import get
@@ -163,6 +162,38 @@ def wait(obj, timeout=None):
   else:
     return obj.synchronizable_condition.wait(timeout)
 
+
+def wait_for_condition(obj, cond, timeout=None):
+  """
+  This is an extended version of #wait() that applies the function *cond* to
+  check for a condition to break free from waiting on *obj*. Note that *obj*
+  must be notified when its state changes in order to check the condition.
+  Note that access to *obj* is synchronized when *cond* is called.
+
+  # Arguments
+  obj (Synchronizable): The object to synchronize and wait for *cond*.
+  cond (function): A function that accepts *obj* as an argument. Must return
+    #True if the condition is met.
+  timeout (number, None): The maximum number of seconds to wait.
+
+  # Returns
+  bool: #True if the condition was met, #False if not and a timeout ocurred.
+  """
+
+  with synchronized(obj):
+    if timeout is None:
+      while not cond(obj):
+        wait(obj)
+    else:
+      t_start = time.time()
+      while not cond(obj):
+        t_delta = time.time() - t_start
+        if t_delta >= timeout:
+          return False
+        wait(obj, timeout - t_delta)
+  return True
+
+
 def notify(obj):
   """
   Notify *obj* so that a single thread that is waiting for the object with
@@ -186,6 +217,10 @@ def notify_all(obj):
 
 # Job API
 # ============================================================================
+
+class Timeout(Exception):
+  " Raised when a timeout occurred. "
+
 
 class Job(Synchronizable):
   """
@@ -253,9 +288,7 @@ class Job(Synchronizable):
 
   _Listener = collections.namedtuple('_Listener', 'callback once')
   ExceptionInfo = collections.namedtuple('ExceptionInfo', 'type value tb')
-
-  class Timeout(Exception):
-    " Raised when a timeout occurred in #Job.wait(). "
+  Timeout = Timeout
 
   class Cancelled(Exception):
     " Raised when the Job was cancelled in #Job.wait() or #Job.result. "
@@ -496,16 +529,10 @@ class Job(Synchronizable):
     Timeout: If the timeout limit is exceeded.
     """
 
-    start_t = time.time()
-    with synchronized(self):
-      while self.__state == Job.RUNNING and not self.__cancelled:
-        if timeout is None:
-          wait(self)
-        else:
-          time_passed = time.time() - start_t
-          if time_passed > timeout:
-            raise Job.Timeout
-          wait(self, timeout - time_passed)
+    def cond(self):
+      return self.__state != Job.RUNNING or self.__cancelled
+    if not wait_for_condition(self, cond, timeout):
+      raise Job.Timeout
     return self.result
 
   def start(self, as_thread=True, daemon=False, __state_check=True):
@@ -650,33 +677,32 @@ def as_completed(jobs):
 
 
 class ThreadPool(object):
-  '''
-  This class represents a pool of threads that can process jobs
-  up to a certain number of maximum concurrent workers. Each submission
-  will receive its own `Job` or you can submit a `Job` directly. The
-  workers will be started right when the pool is created.
+  """
+  This class represents a pool of threads that can process jobs up to a certain
+  number of maximum concurrent workers. Jobs can be submitted directly (from
+  a #~Job.PENDING state) or functions can be passed. The worker-threads will be
+  started when the ThreadPool is created.
 
-  .. code-block:: python
+  Make sure to call #ThreadPool.shutdown() at some point. You can also use a
+  `with`-statement.
 
-    with nr.utils.concurrency.ThreadPool(5) as pool:
-      jobs = dict([pool.submit(url_open, [url]), url] for url in URLS)
-      for job in nr.utils.concurrency.as_completed(jobs):
-        url = jobs[job]
-        try:
-          result = job.result
-        except Exception as exc:
-          print("Error fetching", url, ":", exc)
-        else:
-          print("Successfully fetched", url)
+  # Example
+  ```python
+  from nr.concurrency import ThreadPool, as_completed
+  with ThreadPool() as pool:
+    jobs = []
+    for data in get_data_to_process():
+      jobs.append(pool.submit(process_data, data))
+    for job in as_completed(jobs):
+      print(job.result)
+  ```
 
-  .. warning::
-
-    You must make sure to call ThreadPool.shutdown() at some point,
-    otherwise the application will not be able to exit as the workers
-    are created as non-daemon threads.
-  '''
-
-  Timeout = Job.Timeout
+  # Parameters
+  max_workers (int): The number of worker threads to spawn. Defaults to the
+    number of cores on the current machines processor (see #cpu_count()).
+  print_exc (bool): Forwarded to the #Job objects that are created with
+    #ThreadPool.submit().
+  """
 
   class _Worker(threading.Thread):
 
@@ -703,12 +729,11 @@ class ThreadPool(object):
           with self.lock:
             self.current = None
 
-  def __init__(self, max_workers, name=None, print_exc=True):
+  def __init__(self, max_workers, print_exc=True):
     super(ThreadPool, self).__init__()
     self.__queue = SynchronizedDeque()
     self.__threads = [self._Worker(self.__queue) for i in range(max_workers)]
     self.__running = True
-    self.name = name
     self.print_exc = print_exc
     [t.start() for t in self.__threads]
 
@@ -722,77 +747,96 @@ class ThreadPool(object):
   def __len__(self):
     return len(self.__queue)
 
+  def pending_jobs(self):
+    """
+    Returns a list of all Jobs that are pending and waiting to be processed.
+    """
+
+    return self.__queue.snapshot()
+
   def current_jobs(self):
-    '''
-    Retrieves a snapshot of the Jobs that are currently being
-    processed by the :class:`ThreadPool`. These jobs are no in the
-    pool's queue.
-    '''
+    """
+    Returns a snapshot of the Jobs that are currently being processed by the
+    ThreadPool. These jobs can not be found in the #pending_jobs() list.
+    """
 
     jobs = []
-    for worker in self.__threads:
-      with worker.lock:
-        if worker.current:
-          jobs.append(worker.current)
+    with synchronized(self.__queue):
+      for worker in self.__threads:
+        with synchronized(worker):
+          if worker.current:
+            jobs.append(worker.current)
     return jobs
 
   def clear(self):
-    '''
-    Remove all jobs from the queue and return a list of all jobs
-    that were still pending. This method does not call :meth:`Job.cancel`.
-    If you want that, use :meth:`cancel_all` or call the method manually.
-    '''
+    """
+    Removes all pending Jobs from the queue and return them in a list. This
+    method does **no**t call #Job.cancel() on any of the jobs. If you want
+    that, use #cancel_all() or call it manually.
+    """
 
     with synchronized(self.__queue):
       jobs = self.__queue.snapshot()
       self.__queue.clear()
     return jobs
 
-  def cancel_all(self):
-    '''
-    Much like :meth:`clear`, but also calls :meth:`Job.cancel` on
-    all the jobs returned and on the jobs that are currently being
-    processed by the worker threads.
-    '''
+  def cancel_all(self, cancel_current=True):
+    """
+    Similar to #clear(), but this function also calls #Job.cancel() on all
+    jobs. Also, it **includes** all jobs that are currently being executed if
+    *cancel_current* is True.
 
-    jobs = self.clear()
+    # Arguments
+    cancel_current (bool): Also cancel currently running jobs and include them
+      in the returned list of jobs.
+
+    # Returns
+    list: A list of the #Job#s that were canceled.
+    """
+
+    with synchronized(self.__deque):
+      jobs = self.clear()
+      if cancel_current:
+        jobs.extend(self.current_jobs())
+
     [j.cancel() for j in jobs]
-    [j.cancel() for j in self.current_jobs()]
     return jobs
 
-  def submit(self, job_or_function, pass_job=True, args=(), kwargs=None, front=False):
-    '''
-    Submit a new :class:`Job` to the :class:`ThreadPool`.
+  def submit(self, job, pass_job=True, args=(), kwargs=None, front=False):
+    """
+    Submit a new #Job to the ThreadPool.
 
-    :param job_or_function: A :class:`Job` or callable object.
-    :param pass_job: If True and *job_or_function* was passed a callable
-      and no :class:`Job`, the actual job instance is passed to the
-      function as its first parameter, otherwise it will be omitted.
-    :param args: Additional positional arguments for the callable object.
-    :param kwargs: Additional keyword arguments for the callable object.
-    :param front: If True, the new job will be added to the front
-      of the queue, thus be processed before any other job.
-    :raise TypeError: If a :class:`Job` was passed and *args* or *kwargs*
-      is not empty/None.
-    :raise RuntimeError: If the :class:`ThreadPool` ain't running.
-    '''
+    # Arguments
+    job (function, Job): Either a function that accepts *args* and *kwargs*
+      or a #Job object that is in #~Job.PENDING state.
+    args (list, tuple): A list of arguments to be passed to *job*, if it is
+      a function.
+    kwargs (dict): A dictionary to be passed as keyword arguments to *job*,
+      if it is a function.
+    front (bool): If #True, the job will be inserted in the front of the queue.
+
+    # Returns
+    Job: The job that was added to the queue.
+
+    # Raises
+    TypeError: If a #Job object was passed but *args* or *kwargs* are non-empty.
+    RuntimeError: If the ThreadPool is not running (ie. if it was shut down).
+    """
 
     if not self.__running:
       raise RuntimeError("ThreadPool ain't running")
 
-    if isinstance(job_or_function, Job):
+    if isinstance(job, Job):
       if args or kwargs:
         raise TypeError('can not provide additional arguments for Job')
-      job = job_or_function
+      if job.state != Job.PENDING:
+        raise RuntimeError('job is not pending')
       job.print_exc = self.print_exc
-    elif callable(job_or_function):
+    elif callable(job):
       if kwargs is None:
         kwargs = {}
-      if pass_job:
-        target = lambda j: job_or_function(job, *args, **kwargs)
-      else:
-        target = lambda j: job_or_function(*args, **kwargs)
-      job = Job(target, print_exc=self.print_exc)
+      target = lambda j: job(*args, **kwargs)
+      job = Job(target=target, print_exc=self.print_exc)
     else:
       raise TypeError('expected Job or callable')
 
@@ -803,33 +847,38 @@ class ThreadPool(object):
     return job
 
   def wait(self, timeout=None):
-    '''
-    Block until all jobs in the :class:`ThreadPool` are finished.
-    Beware that this can make the program run into a deadlock if
-    another thread adds new jobs to the pool.
+    """
+    Block until all jobs in the ThreadPool are finished. Beware that this can
+    make the program run into a deadlock if another thread adds new jobs to the
+    pool!
 
-    :raise Timeout: If the timeout is exceeded.
-    '''
+    # Raises
+    Timeout: If the timeout is exceeded.
+    """
 
     if not self.__running:
       raise RuntimeError("ThreadPool ain't running")
-    self.__queue.wait()
+    self.__queue.wait(timeout)
 
   def shutdown(self, wait=True):
-    '''
-    Shut down the :class:`ThreadPool`.
+    """
+    Shut down the ThreadPool.
 
-    :param wait: If True, wait until all worker threads end.
-    '''
+    # Arguments
+    wait (bool): If #True, wait until all worker threads end. Note that pending
+      jobs are still executed. If you want to cancel any pending jobs, use the
+      #clear() or #cancel_all() methods.
+    """
 
     if self.__running:
+      # Add a Non-entry for every worker thread we have.
       for thread in self.__threads:
         assert thread.isAlive()
         self.__queue.append(None)
       self.__running = False
 
     if wait:
-      # TODO SynchronizedDeque does not (yet?) support a join() method
+      self.__queue.wait()
       for thread in self.__threads:
         thread.join()
 
@@ -928,15 +977,21 @@ class Empty(Exception):
   ''' Raised by `SynchronizedDeque.get()`. '''
 
 class SynchronizedDeque(Synchronizable):
-  ''' Thread-safe wrapper for the `collections.deque`. *New in 0.9.6*. '''
+  """
+  Thread-safe wrapper for the `collections.deque`. Behaves similar to a
+  #queue.Queue object. If used as a data- or task-queue, #task_done() must
+  be called after an item has been processed!
+  """
 
-  Empty = Empty
-  Timeout = Job.Timeout
+  Timeout = Timeout
+
+  class Empty(Exception):
+    " Raised when the #SynchronizedDeque is empty. "
 
   def __init__(self, iterable=()):
     super(SynchronizedDeque, self).__init__()
     self._deque = collections.deque(iterable)
-    self._tasks = 0
+    self._tasks = len(self._deque)
 
   def __iter__(self):
     raise RuntimeError('SynchronizedDeque does not support iteration')
@@ -955,9 +1010,11 @@ class SynchronizedDeque(Synchronizable):
 
   @synchronized
   def clear(self):
-    ''' Clears the queue. Note that calling :meth:`wait` immediately
-    after clear can still block when tasks are currently being processed
-    since this method only clears queued items. '''
+    """
+    Clears the queue. Note that calling #wait*( immediately after clear can
+    still block when tasks are currently being processed since this method can
+    only clear queued items.
+    """
 
     self._tasks -= len(self._deque)
     self._deque.clear()
@@ -1024,14 +1081,24 @@ class SynchronizedDeque(Synchronizable):
     notify_all(self)
 
   @synchronized
-  def get(self, method='pop', block=True, timeout=None):
-    '''
-    If *block* is True, this method blocks until an element can be
-    removed from the deque with the specified *method*. If *block* is
-    False, the function will raise `Empty` if no element is available.
-    If *timeout* is not None and the timeout is exceeded, `Timeout`
-    is raised.
-    '''
+  def get(self, block=True, timeout=None, method='pop'):
+    """
+    If *block* is True, this method blocks until an element can be removed from
+    the deque with the specified *method*. If *block* is False, the function
+    will raise #Empty if no elements are available.
+
+    # Arguments
+    block (bool): #True to block and wait until an element becomes available,
+      #False otherwise.
+    timeout (number, None): The timeout in seconds to use when waiting for
+      an element (only with `block=True`).
+    method (str): The name of the method to use to remove an element from the
+      queue. Must be either `'pop'` or `'popleft'`.
+
+    # Raises
+    ValueError: If *method* has an invalid value.
+    Timeout: If the *timeout* is exceeded.
+    """
 
     if method not in ('pop', 'popleft'):
       raise ValueError('method must be "pop" or "popleft": {0!r}'.format(method))
@@ -1046,24 +1113,23 @@ class SynchronizedDeque(Synchronizable):
       else:
         t_delta = time.clock() - t_start
         if t_delta > timeout:
-          raise self.Timeout
+          raise Timeout
         wait(self, timeout - t_delta)
 
     return getattr(self, method)()
 
   @synchronized
   def wait(self, timeout=None):
-    ''' Wait until all tasks completed or *timeout* passed. '''
+    """
+    Waits until all tasks completed or *timeout* seconds passed.
+
+    # Raises
+    Timeout: If the *timeout* is exceeded.
+    """
 
     t_start = time.clock()
-    while self._tasks != 0:
-      if timeout is None:
-        wait(self)
-      else:
-        t_delta = time.clock() - t_start
-        if t_delta > timeout:
-          raise self.Timeout
-        wait(self, timeout - t_delta)
+    if not wait_for_condition(self, lambda s: s._tasks == 0, timeout):
+      raise Timeout
 
 
 class Clock(object):
