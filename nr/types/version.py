@@ -29,22 +29,20 @@ class Version(object):
   following elements: MAJOR . MINOR . PATCH EXTENSION
 
   The parts of the version number are compared semantically correct
-  while the EXTENSION is compared lexically (thus, ``1.0-beta10`` is
-  considered a smaller version number than ``1.0-beta2``). Extensions
+  while the EXTENSION is compared lexically (thus, `1.0-beta10` is
+  considered a smaller version number than `1.0-beta2`). Extensions
   are compared case-insensitive. A version number without extension is
   always greater than the respective version number with extension.
 
-  The EXTENSION part must start with a ``-`` or ``.`` character and
+  The EXTENSION part must start with a `-` or `.` character and
   be followed by an alphanumeric letter. Then any number of the former
   plus digits may follow.
 
-  .. attribute:: major
-
-  .. attribute:: minor
-
-  .. attribute:: patch
-
-  .. attribute:: extension
+  # Attributes
+  major (int):
+  minor(int):
+  path (int):
+  extension (str):
   """
 
   def __init__(self, value):
@@ -263,28 +261,26 @@ class VersionCriteria(object):
   a :class:`Version` and returns True or False. This class provides
   a criteria that allows filtering versions from the following schema:
 
-  ::
-
-    *        := Match any version
-    =  V     := Matches a specific version
-    <  V     := Match a version that is older than V
-    <= V     := Match a version that is older than or equal to V
-    >  V     := Match a version that is newer than V
-    >= V     := Match a version that is newer than or equal to V
-    ~  V     := Match a version with the same major and minor release as V
-                that is also equal to or newer than V
-    ^  V     := Match a version with the same major release as V that is
-                also equal to or newer than V
-    V1 - V2  := Match any version number between (including) V1 and V2
-                (mind the whitespace around the hyphen!)
-    x.x.x-x  := Match a version where "x" can be any number. These
-                placeholders can be placed anywhere, like "x.9.1"
-                or "1.x". Any components that are left out will be
-                filled with placeholders.
+      *        := Match any version
+      =  V     := Matches a specific version
+      <  V     := Match a version that is older than V
+      <= V     := Match a version that is older than or equal to V
+      >  V     := Match a version that is newer than V
+      >= V     := Match a version that is newer than or equal to V
+      ~  V     := Match a version with the same major and minor release as V
+                  that is also equal to or newer than V
+      ^  V     := Match a version with the same major release as V that is
+                  also equal to or newer than V
+      V1 - V2  := Match any version number between (including) V1 and V2
+                  (mind the whitespace around the hyphen!)
+      x.x.x-x  := Match a version where "x" can be any number. These
+                  placeholders can be placed anywhere, like "x.9.1"
+                  or "1.x". Any components that are left out will be
+                  filled with placeholders.
 
   For example, to specify a version that will receive all bug fixes
-  and patches, you can use ``~2.1.3``. Multiple criteria can be concatened
-  using double pipes (``||``) as in ``=1.0 || >2.5 || 0.9 - 1.3.0-rc1``.
+  and patches, you can use `~2.1.3`. Multiple criteria can be concatened
+  using double pipes (`||`) as in `=1.0 || >2.5 || 0.9 - 1.3.0-rc1`.
   """
 
   def __init__(self, value):

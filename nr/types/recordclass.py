@@ -22,17 +22,20 @@
 class recordclass(object):
   """
   This class can be considered a new base for all classes that implement
-  the ``__slots__`` interface. It provides convenient method to treat the
-  class instances like mutable versions of :func:`collections.namedtuple`.
+  the `__slots__` interface. It provides convenient methods to treat the
+  class instances like mutable versions of #:collections.namedtuple.
 
-  .. code:: python
+  # Example
+  ```python
+  class MyRecord(recordclass):
+    __slots__ = 'foo bar ham egg'.split()
+    __defaults__ = {'egg': 'yummy'}
+  # or
+  MyRecord = recordclass.new('MyRecord', 'foo bar ham', egg='yummy')
 
-    class MyRecord(recordclass_base):
-      __slots__ = 'foo bar ham egg'.split()
-      __defaults__ = {'egg': 'yummy'}
-
-    data = MyRecord('the-foo', 42, ham="spam")
-    assert data.egg = 'yummy'
+  data = MyRecord('the-foo', 42, ham="spam")
+  assert data.egg = 'yummy'
+  ```
   """
 
   def __init__(self, *args, **kwargs):

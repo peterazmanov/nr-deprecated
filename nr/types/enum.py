@@ -17,98 +17,93 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-r"""
-This module implements a simple framework for creating
-C-like enumerations in Python using classes. Simply
-inherit from the ``Enumeration`` class.
-
-.. code:: python
-
-  >>> class Color(enum.Enumeration):
-  ...   red = 0
-  ...   green = 1
-  ...   blue = 2
-  >>> print Color.red
-  <Color: red>
-  >>> print Color('green')
-  <Color: green>
-  >>> print Color(2)
-  <Color: blue>
-  >>> print Color('red') is Color.red
-  True
-  >>> print Color.blue.name
-  blue
-  >>> Color(343)
-  Traceback (most recent call last):
-    File "test.py", line 10, in <module>
-    Color(343)
-    File "C:\\repositories\\py-nr.utils\\nr\\utils\\enum.py", line 159, in __new__
-    raise NoSuchEnumerationValue(cls.__name__, value)
-  nr.utils.enum.NoSuchEnumerationValue: ('Color', 343)
-
-If you want to disable that an invalid enumeration value
-will raise an error, a ``__fallback__`` value can be
-specified on class-level.
-
-.. code:: python
-
-  >>> class Color(enum.Enumeration):
-  ...   red = 0
-  ...   green = 1
-  ...   blue = 2
-  ...   __fallback__ = -1
-  >>> print Color(42)
-  <Color -invalid->
-  >>> print Color(7).value
-  -1
-  >>> print Color(16).name
-  -invalid-
-
-You can also iterate over an enumeration class. Note that
-the order of the items yielded is value-sorted and the order
-of declaration does not play a role.
-
-.. code:: python
-
-  >>> class Color(enum.Enumeration):
-  ...   red = 0
-  ...   green = 1
-  ...   blue = 2
-  ...   __fallback__ = -1
-  >>> for color in Color:
-  ...   print color
-  <Color: red>
-  <Color: green>
-  <Color: blue>
-
-You can add data or actual methods to an enumeration
-class by wrapping it with the :class:`Data` class.
-
-.. code:: python
-
-  class Color(enum.Enumeration):
-    red = 0
-    green = 1
-    blue = 2
-
-    @enum.Data
-    @property
-    def astuple(self):
-      if self == Color.red:
-        return (1, 0, 0)
-      elif self == Color.green:
-        return (0, 1, 0)
-      elif self == Color.blue:
-        return (0, 0, 1)
-      else:
-        assert False
-
-  print Color.red.astuple
-  # (1, 0, 0)
 """
+This module implements a simple framework for creating C-like enumerations in
+Python using classes. Simply inherit from the #Enumeration class.
 
-__author__ = 'Niklas Rosenstein <rosensteinniklas@gmail.com>'
-__version__ = '0.1.2'
+```python
+>>> class Color(enum.Enumeration):
+...   red = 0
+...   green = 1
+...   blue = 2
+>>> print Color.red
+<Color: red>
+>>> print Color('green')
+<Color: green>
+>>> print Color(2)
+<Color: blue>
+>>> print Color('red') is Color.red
+True
+>>> print Color.blue.name
+blue
+>>> Color(343)
+Traceback (most recent call last):
+  File "test.py", line 10, in <module>
+  Color(343)
+  File "C:\\repositories\\py-nr.utils\\nr\\utils\\enum.py", line 159, in __new__
+  raise NoSuchEnumerationValue(cls.__name__, value)
+nr.utils.enum.NoSuchEnumerationValue: ('Color', 343)
+```
+
+If you want to disable that an invalid enumeration value will raise an error,
+a `__fallback__` value can be specified on class-level.
+
+```python
+>>> class Color(enum.Enumeration):
+...   red = 0
+...   green = 1
+...   blue = 2
+...   __fallback__ = -1
+>>> print Color(42)
+<Color -invalid->
+>>> print Color(7).value
+-1
+>>> print Color(16).name
+-invalid-
+```
+
+You can also iterate over an enumeration class. Note that the order of the
+items yielded is value-sorted and the order of declaration does not play any
+role.
+
+```python
+>>> class Color(enum.Enumeration):
+...   red = 0
+...   green = 1
+...   blue = 2
+...   __fallback__ = -1
+>>> for color in Color:
+...   print color
+<Color: red>
+<Color: green>
+<Color: blue>
+```
+
+You can add data or actual methods to an enumeration class by wrapping it with
+the #Data class.
+
+```python
+class Color(enum.Enumeration):
+  red = 0
+  green = 1
+  blue = 2
+
+  @enum.Data
+  @property
+  def astuple(self):
+    if self == Color.red:
+      return (1, 0, 0)
+    elif self == Color.green:
+      return (0, 1, 0)
+    elif self == Color.blue:
+      return (0, 0, 1)
+    else:
+      assert False
+
+print Color.red.astuple
+# (1, 0, 0)
+```
+"""
 
 import sys
 import ctypes
@@ -129,34 +124,34 @@ class NoSuchEnumerationValue(Exception):
   pass
 
 class Data(object):
-  r""" Small class that can be used to specify data on an
-  enumeration that should not be converted and interpreted
-  as an enumeration value.
+  """
+  Small class that can be used to specify data on an enumeration that should
+  not be converted and interpreted as an enumeration value.
 
-  .. code:: python
+  ```python
+  class Color(enum.Enumeration):
+    red = 0
+    green = 1
+    blue = 2
 
-    class Color(enum.Enumeration):
-      red = 0
-      green = 1
-      blue = 2
+    @enum.Data
+    @property
+    def astuple(self):
+      if self == Color.red:
+        return (1, 0, 0)
+      elif self == Color.green:
+        return (0, 1, 0)
+      elif self == Color.blue:
+        return (0, 0, 1)
+      else:
+        assert False
 
-      @enum.Data
-      @property
-      def astuple(self):
-        if self == Color.red:
-          return (1, 0, 0)
-        elif self == Color.green:
-          return (0, 1, 0)
-        elif self == Color.blue:
-          return (0, 0, 1)
-        else:
-          assert False
+  print Color.red.astuple
+  # (1, 0, 0)
+  ```
 
-    print Color.red.astuple
-    # (1, 0, 0)
-
-  This class can be subclassed to add new sugar to the
-  already very sweet pie. """
+  This class can be subclassed to add new sugar to the already very sweet pie.
+  """
 
   def __init__(self, value):
     super(Data, self).__init__()
@@ -166,20 +161,20 @@ class Data(object):
     return self.value
 
 class EnumerationMeta(type):
-  r""" This is the meta class for the :class:`Enumeration`
-  base class which handles the automatic conversion of integer
-  values to instances of the Enumeration class. There are no
-  other types allowed other than int or :class:`Data` which
+  """
+  This is the meta class for the #Enumeration base class which handles the
+  automatic conversion of integer values to instances of the #Enumeration
+  class. There are no other types allowed other than int or #Data which
   will be unpacked on the Enumeration class.
 
-  If an ``__fallback__`` was defined on class-level as
-  an integer, the :class:`Enumeration` constructor will not
-  raise a :class:`NoSuchEnumerationValue` exception if the
-  passed value did not match the enumeration values, but
-  instead return that fallback value.
+  If a `__fallback__` was defined on class-level as an integer, the
+  #Enumeration constructor will not raise a #NoSuchEnumerationValue exception
+  if the passed value did not match the enumeration values, but instead return
+  that fallback value.
 
-  This fallback is not taken into account when attempting
-  to create a new Enumeration object by a string. """
+  This fallback is not taken into account when attempting to create a new
+  #Enumeration object by a string.
+  """
 
   _values = None
   __fallback__ = None
@@ -245,31 +240,34 @@ class EnumerationMeta(type):
     return class_
 
   def __iter__(self):
-    r""" Iterator over value-sorted enumeration values. """
+    " Iterator over value-sorted enumeration values. "
 
     values = self._values.values()
     values.sort(key=lambda x: x.value)
     return iter(values)
 
 class Enumeration(object):
-  r""" This is the base class for listing enumerations. All
-  components of the class that are integers will be automatically
-  converted to instances of the Enumeration class. Creating new
-  instances of the class will only work if the value is an existing
-  enumeration value.
+  """
+  This is the base class for listing enumerations. All components of the class
+  that are integers will be automatically converted to instances of the
+  #Enumeration class. Creating new instances of the class will only work if the
+  value is an existing enumeration value.
 
-  The hash of an enumeration value is its name, but indexing
-  a container corresponds to its value. """
+  The hash of an enumeration value is its name, but indexing a container
+  corresponds to its value.
+  """
 
   __metaclass__ = EnumerationMeta
 
   def __new__(cls, value, _allow_fallback=True):
-    r""" Creates a new instance of the Enumeration. *value* must
-    be the integral number of one of the existing enumerations.
-    :class:`NoSuchEnumerationValue` is raised in any other case.
+    """
+    Creates a new instance of the Enumeration. *value* must be the integral
+    number of one of the existing enumerations. #NoSuchEnumerationValue is
+    raised in any other case.
 
-    If a fallback was defined, it is returned only if *value*
-    is an integer, not if it is a string. """
+    If a fallback was defined, it is returned only if *value* is an integer,
+    not if it is a string.
+    """
 
     # Try to find the actual instance of the Enumeration class
     # for the integer value and return it if it is available.

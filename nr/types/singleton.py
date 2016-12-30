@@ -17,6 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+"""
+This module provides a simple facility to create singleton objects.
+
+# members
+
+Default (singleton): A singleton that is intended to represent a default value
+  where #None is an accepted, non-default value.
+"""
 
 def make_singleton(name, type_name=None, as_bool=True):
   """
@@ -29,7 +37,7 @@ def make_singleton(name, type_name=None, as_bool=True):
     __instance = None
     def __new__(cls):
       if cls.__instance is None:
-        cls.__instance = super().__new__(cls)
+        cls.__instance = super(singleton_class, cls).__new__(cls)
       return cls.__instance
     def __str__(self):
       return name

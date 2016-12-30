@@ -47,6 +47,20 @@ generate:
     - nr.concurrency.Clock.sleep
   - nr.concurrency.split_list_by
   - nr.concurrency.reraise
+- types/index.md:
+  - nr.types
+- types/enum.md:
+  - nr.types.enum
+  - nr.types.enum.Data
+  - nr.types.enum.Enumeration
+- types/recordclass.md:
+  - nr.types.recordclass.recordclass
+- types/singleton.md:
+  - nr.types.singleton:
+    - nr.types.singleton.make_singleton
+- types/version.md:
+  - nr.types.version.Version
+  - nr.types.version.VersionCriteria
 pages:
 - Home: index.md << ../README.md
 - Concurrency API:
@@ -57,3 +71,9 @@ pages:
   - SynchronizedDeque: concurrency/syncdeque.md
   - EventQueue: concurrency/eventqueue.md
   - Utils: concurrency/utils.md
+- Types:
+  - nr.types: types/index.md
+  - Enum: types/enum.md
+  - Recordclass: types/recordclass.md
+  - Singleton: types/singleton.md
+  - Semantic Versioning: types/version.md
