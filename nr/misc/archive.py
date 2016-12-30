@@ -18,12 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import builtins
 import os
 import shutil
 import tarfile
 import zipfile
 from functools import partial
+
+try:
+  import builtins
+except ImportError:
+  import __builtin__ as builtins
 
 openers = {}
 

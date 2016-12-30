@@ -65,6 +65,39 @@ generate:
   - nr.py.bytecode:
     - nr.py.bytecode.get_stackdelta
     - nr.py.bytecode.get_assigned_name
+- parse/gitignore.md:
+  - nr.parse.gitignore:
+    - nr.parse.gitignore.parse
+    - nr.parse.gitignore.get_defaults
+    - nr.parse.gitignore.walk
+    - nr.parse.gitignore.Pattern
+    - nr.parse.gitignore.IgnoreList
+    - nr.parse.gitignore.IgnoreListCollection
+- parse/strex.md:
+  - nr.parse.strex:
+    - nr.parse.strex.readline
+    - nr.parse.strex.match
+    - nr.parse.strex.Scanner
+    - nr.parse.strex.Lexer
+    - nr.parse.strex.Rule
+    - nr.parse.strex.Regex
+    - nr.parse.strex.Keyword
+    - nr.parse.strex.Charset
+    - nr.parse.strex.TokenizationError
+    - nr.parse.strex.UnexpectedTokenError
+- misc/archive.md:
+  - nr.misc.archive:
+    - nr.misc.archive.open
+    - nr.misc.archive.extract
+    - nr.misc.archive.register_opener
+    - nr.misc.archive.get_opener
+    - nr.misc.archive.Error
+    - nr.misc.archive.UnknownArchive
+- misc/cli.md:
+  - nr.misc.cli:
+    - nr.misc.cli.Cli
+    - nr.misc.cli.Response
+    - nr.misc.cli.TimeoutError
 pages:
 - Home: index.md << ../README.md
 - Concurrency API:
@@ -75,11 +108,17 @@ pages:
   - SynchronizedDeque: concurrency/syncdeque.md
   - EventQueue: concurrency/eventqueue.md
   - Utils: concurrency/utils.md
+- Miscallenous:
+  - Archive: misc/archive.md
+  - CLI: misc/cli.md
+- Parsing:
+  - STREX: parse/strex.md
+  - .gitignore: parse/gitignore.md
+- Python Internals:
+  - nr.py.bytecode: py/bytecode.md
 - Types:
   - nr.types: types/index.md
   - Enum: types/enum.md
   - Recordclass: types/recordclass.md
   - Singleton: types/singleton.md
   - Semantic Versioning: types/version.md
-- Python Internals:
-  - nr.py.bytecode: py/bytecode.md
