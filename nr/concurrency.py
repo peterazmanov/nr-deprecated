@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016  Niklas Rosenstein
+# Copyright (c) 2015-2017  Niklas Rosenstein
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,18 +17,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-'''
-`nr.utils.concurrency` - Simplifying concurrency
-================================================
-'''
+"""
+This module provides a simple interface to creating and managing concurrent
+tasks. Note that the module does not primarily focus on performance
+multithreading, but to enable writing multitask applications with ease.
 
-__all__ = ['Job', 'ThreadPool', 'EventQueue', 'Synchronizable', 'Clock',
-           'InvalidStateError', 'Cancelled', 'Timeout', 'main_thread',
-           'current_thread', 'as_completed', 'synchronized', 'notify',
-           'notify_all', 'wait']
+Compatible with Python 2 and 3.
 
-__author__ = 'Niklas Rosenstein <rosensteinniklas(at)gmail.com>'
-__version__ = '0.9.6-dev'
+# Example
+
+```python
+from nr.concurrency import Job, as_completed
+from requests import get
+urls = ['https://google.com', 'https://github.com', 'https://readthedocs.org']
+for job in as_completed(Job(target=(lambda: get(x)), start=True) for x in urls):
+  print(job.result)
+```
+"""
 
 import collections
 import functools
@@ -36,6 +41,7 @@ import threading
 import time
 import traceback
 import sys
+from threading import current_thread
 
 try:
   import queue
@@ -43,128 +49,241 @@ except ImportError:
   import Queue as queue
 
 
-from threading import current_thread
-
 main_thread = next(t for t in threading.enumerate()
   if isinstance(t, threading._MainThread))
 
 
-# Possible Job states.
-PENDING = 'pending'
-RUNNING = 'running'
-ERROR = 'error'
-SUCCESS = 'success'
+# Synchronizable API
+# ============================================================================
 
-# Job event types, additionally to ERROR, SUCCESS
-EVENT_STARTED = 'started'
-EVENT_FINISHED = 'finished'
-EVENT_CANCELLED = 'cancelled'
+class Synchronizable(object):
+  """
+  Base class that implements the #Synchronizable interface. Classes that
+  inherit from this class can automatically be used with the #synchronized(),
+  #wait(), #notify() and #notify_all() functions.
+
+  # Attributes
+
+  synchronizable_lock_type[static]: A type or function that returns lock
+    object. Defaults to #threading.RLock.
+
+  synchronizable_condition_type[static]: A type or function that accepts
+    an instance of `synchronizable_lock_type` as its first argument and
+    returns a new condition variable.
+
+  synchronizable_lock: An instance of type `synchronizable_lock_type`.
+
+  synchronizable_condition: An instance of type `synchronizable_condition_type`.
+    The `synchronizable_lock` is passed as an argument to the constructor when
+    the condition variable is created.
+  """
+
+  synchronizable_lock_type = staticmethod(threading.RLock)
+  synchronizable_condition_type = staticmethod(threading.Condition)
+
+  def __new__(cls, *args, **kwargs):
+    instance = super(Synchronizable, cls).__new__(cls)
+    instance.synchronizable_lock = cls.synchronizable_lock_type()
+    instance.synchronizable_condition = cls.synchronizable_condition_type(instance.synchronizable_lock)
+    return instance
 
 
-class InvalidStateError(Exception):
-  ''' Raised by various `Job` methods. '''
+def synchronized(obj):
+  """
+  This function has two purposes:
+
+  1. Decorate a function that automatically synchronizes access to the object
+     passed as the first argument (usually `self`, for member methods)
+  2. Synchronize access to the object, used in a `with`-statement.
+
+  Note that you can use #wait(), #notify() and #notify_all() only on
+  synchronized objects.
+
+  # Example
+  ```python
+  class Box(Synchronizable):
+    def __init__(self):
+      self.value = None
+    @synchronized
+    def get(self):
+      return self.value
+    @synchronized
+    def set(self, value):
+      self.value = value
+
+  box = Box()
+  box.set('foobar')
+  with synchronized(box):
+    box.value = 'taz\'dingo'
+  print(box.get())
+  ```
+
+  # Arguments
+  obj (Synchronizable, function): The object to synchronize access to, or a
+    function to decorate.
+
+  # Returns
+  1. The decorated function.
+  2. The value of `obj.synchronizable_condition`, which should implement the
+     context-manager interface (to be used in a `with`-statement).
+  """
+
+  if hasattr(obj, 'synchronizable_condition'):
+    return obj.synchronizable_condition
+  elif callable(obj):
+    @functools.wraps(obj)
+    def wrapper(self, *args, **kwargs):
+      with self.synchronizable_condition:
+        return obj(self, *args, **kwargs)
+    return wrapper
+  else:
+    raise TypeError('expected Synchronizable instance or callable to decorate')
 
 
-class Cancelled(Exception):
-  ''' Raised by `Job.wait()`. '''
+def wait(obj, timeout=None):
+  """
+  Wait until *obj* gets notified with #notify() or #notify_all(). If a timeout
+  is specified, the function can return without the object being notified if
+  the time runs out.
+
+  Note that you can only use this function on #synchronized() objects.
+
+  # Arguments
+  obj (Synchronizable): An object that can be synchronized.
+  timeout (number, None): The number of seconds to wait for the object to get
+    notified before returning. If not value or the value #None is specified,
+    the function will wait indefinetily.
+  """
+
+  if timeout is None:
+    return obj.synchronizable_condition.wait()
+  else:
+    return obj.synchronizable_condition.wait(timeout)
+
+def notify(obj):
+  """
+  Notify *obj* so that a single thread that is waiting for the object with
+  #wait() can continue. Note that you can only use this function on
+  #synchronized() objects.
+
+  # Arguments
+  obj (Synchronizable): The object to notify.
+  """
+
+  return obj.synchronizable_condition.notify()
 
 
-class Timeout(Exception):
-  ''' Raised by `Job.wait()` and `SynchronizedDeque.get()`. '''
+def notify_all(obj):
+  """
+  Like #notify(), but allow all waiting threads to continue.
+  """
+
+  return obj.synchronizable_condition.notify_all()
 
 
-class Empty(Exception):
-  ''' Raised by `SynchronizedDeque.get()`. '''
+# Job API
+# ============================================================================
 
+class Job(Synchronizable):
+  """
+  This class represents a task (Python function) and its result. The result is
+  stored in the #Job object and can be retrieved at any time, given that the
+  job has finished successfully. Exceptions that ocurr inside the Python
+  function that is invoked by the job can propagated to the caller that obtains
+  the result of the job.
 
-_Listener = collections.namedtuple('_Listener', 'callback once')
-ExceptionInfo = collections.namedtuple('ExceptionInfo', 'type value tb')
+  # Job States
 
+  A job can only be in one state at a time. Depending on the state, fetching
+  the result of the job will either raise an #InvalidState exception, a
+  #Cancelled exception, any other exception that ocurred in the Python function
+  that was called by the job, or actually return the result.
 
-class Job(object):
-  '''
-  This class represents a job that can be executed at any time
-  from any thread either synchronous or asynchronous (ie. in a
-  different thread of execution). A Job can be cancelled at any time,
-  but the implementation must handle the cancellation flag gracefully.
+  Possible states are:
 
-  A Job can have the following states:
+  - `Job.PENDING`: The job is waiting to be started.
+  - `Job.RUNNING`: The job is currently running.
+  - `Job.ERROR`: The execution of the job resulted in an exception.
+  - `Job.SUCCESS`: The job finished successfully and the result can be obtained.
+  - `Job.CANCELLED`: The job was cancelled and finished. Note that this state
+    entered after the #Job.cancelled flag is set.
 
-  - ``PENDING``
-  - ``RUNNING``
-  - ``ERROR``
-  - ``SUCCESS``
+  # Events
 
-  A Job has the following events that can be listened to with the
-  `Job.add_listener()` or `Job.listen()` method:
+  For every job, one or more callbacks can be registered which is invoked every
+  time the job transitions into a new state. See #Job.add_listener() and
+  #Job.listen().
 
-  - ``EVENT_STARTED``
-  - ``EVENT_FINISHED``
-  - ``EVENT_CANCELLED``
+  # Parameters
 
-  Note that ``EVENT_FINISHED`` is triggered even if ``EVENT_CANCELLED``
-  has already been triggered since a cancelled Job can also finish.
+  task (callable): A callable accepting #Job object as argument that actually
+    performs the task and returns the result. If you want to pass a callable
+    that takes no arguments, pass it via the `target` parameter.
+  target (callable): Just as the `task` parameter, but this time the function
+    does not accept any arguments. Note that the two parameters can not be
+    specified at the same time. Doing so will result in a #TypeError.
+  name (any):
+  start (bool): #True if the job should be started in a separate thread
+    immediately. Defaults to #False.
+  data (any):
+  print_exc (bool):
 
-  :param target: A callable accepting the :class:`Job` instance as
-    its the first and only argument.
-  :param name: An optional name for the Job. This is usually useful
-    for debugging purposes.
-  :param lock: An optional custom locking primitive. A non-recursive
-    lock is used by default.
-  :param print_exc: If True is specified for this parameter, then the
-    Job will print exceptions occuring during the execution of the
-    *target* callable. The exception is still saved in the
-    :attr:`exception` property.
+  # Attributes
 
-  .. attribute:: userdict
+  name (any): An identifier for the Job. Defaults to #None. This member is
+    useful for debugging concurrent applications by giving Jobs a unique name.
 
-    A dictionary that can be filled with arbitrary data. If multiple
-    threads access this dictionary, the :class:`Job` object should be
-    synchronized using the :attr:`synchronized` function.
+  data (any): This member can be filled with an arbitrary Python object.
+    Useful to store context information that is needed when the Job finished.
+    Note that access to this member, if not already garuanteed to be exclusive,
+    must be #synchronized().
 
-  .. attribute:: lock
+  print_exc (bool): Whether to print the traceback of exceptions ocurring in
+    the #Job.run() or #Job.target or not. Defaults to #True.
+  """
 
-    The locking synchronization primitive.
+  PENDING = 'pending'
+  RUNNING = 'running'
+  ERROR = 'error'
+  SUCCESS = 'success'
+  CANCELLED = 'cancelled'
 
-  .. attribute:: condition
+  _Listener = collections.namedtuple('_Listener', 'callback once')
+  ExceptionInfo = collections.namedtuple('ExceptionInfo', 'type value tb')
 
-    The condition synchronization primitive.
+  class Timeout(Exception):
+    " Raised when a timeout occurred in #Job.wait(). "
 
-  .. attribute:: print_exc
-  '''
+  class Cancelled(Exception):
+    " Raised when the Job was cancelled in #Job.wait() or #Job.result. "
 
-  # Make the global constants and exception types available
-  # on the Job class and instances of it.
-  PENDING = PENDING
-  RUNNING = RUNNING
-  ERROR = ERROR
-  SUCCESS = SUCCESS
-  EVENT_STARTED = EVENT_STARTED
-  EVENT_FINISHED = EVENT_FINISHED
-  EVENT_CANCELLED = EVENT_CANCELLED
-  Timeout = Timeout
-  Cancelled = Cancelled
-  InvalidState = InvalidStateError
+  class InvalidState(Exception):
+    """
+    Raised when the Job is in a state that is not supported by the requested
+    operation (eg. reading the result while the job is still running).
+    """
 
-  def __init__(self, target=None, name=None, lock=None, print_exc=True):
+  def __init__(self, task=None, target=None, name=None, start=False, data=None, print_exc=True):
     super(Job, self).__init__()
-    self.__target = target
-    self.__state = PENDING
+    if target is not None:
+      if task is not None:
+        raise TypeError('either task or target parameter must be specified, not both')
+      task = lambda j: target()
+    self.__target = task
+    self.__state = Job.PENDING
     self.__cancelled = False
     self.__result = None
     self.__exception = None
-    self.__listeners = {None: [], EVENT_STARTED: [], EVENT_FINISHED: [], EVENT_CANCELLED: []}
+    self.__listeners = {None: [], Job.SUCCESS: [], Job.ERROR: [], Job.CANCELLED: []}
     self.__event_set = set()
-    self.__event_lock = threading.Lock()
-    self.__name = name
-    self.userdict = {}
-    self.lock = lock or threading.Lock()
-    self.condition = threading.Condition(self.lock)
+    self.name = name
+    self.data = data
     self.print_exc = print_exc
+    if start: self.start()
 
   def __repr__(self):
-    if self.__name:
-      name = self.__name
+    if self.name:
+      name = self.name
     elif hasattr(self.__target, '__name__'):
       name = self.__target.__name__
     elif hasattr(self, 'name'):
@@ -174,285 +293,259 @@ class Job(object):
     else:
       name = None
 
-    with self.lock:
+    with synchronized(self):
+      state = self.__state
       cancelled = self.__cancelled
 
-    result = '<Job {0!r}'.format(name)
-    if cancelled:
-      result += ' cancelled '
-    result += ' at 0x{0:x}'.format(id(self))
-    with self.lock:
-      result += ' , state: {0}>'.format(self.__state)
+    result = '<cancelled Job' if (cancelled and state != Job.CANCELLED) else '<Job'
+    result += ' {0!r} at 0x{1:x}, state: {2}>'.format(name, id(self), state)
     return result
 
   @property
+  @synchronized
   def state(self):
-    ''' The state of the job. '''
+    " The job's state, one of #PENDING, #RUNNING, #ERROR, #SUCCESS or #CANCELLED. "
 
-    with self.lock:
-      return self.__state
+    return self.__state
 
   @property
+  @synchronized
   def result(self):
-    '''
-    The result of the jobs execution. Accessing this property while
-    the job is pending or running will raise an `InvalidStateError`. If
-    an exception occured during the jobs execution, it will be raised
-    from accessing this property.
-    '''
+    """
+    The result of the jobs execution. Accessing this property while the job is
+    pending or running will raise #InvalidState. If an exception occured during
+    the jobs execution, it will be raised.
 
-    with self.lock:
-      if self.__state in (PENDING, RUNNING):
-        raise InvalidStateError('job is {0}'.format(self.__state))
-      elif self.__state == ERROR:
-        reraise(*self.__exception)
-      elif self.__state == SUCCESS:
-        return self.__result
-      else:
-        raise RuntimeError('invalid job state {0!r}'.format(self.__state))
+    # Raises
+    InvalidState: If the job is not in state #FINISHED.
+    Cancelled: If the job was cancelled.
+    any: If an exception ocurred during the job's execution.
+    """
+
+    if self.__cancelled:
+      raise Job.Cancelled
+    elif self.__state in (Job.PENDING, Job.RUNNING):
+      raise Job.InvalidState('job is {0}'.format(self.__state))
+    elif self.__state == Job.ERROR:
+      reraise(*self.__exception)
+    elif self.__state == Job.SUCCESS:
+      return self.__result
+    else:
+      raise RuntimeError('invalid job state {0!r}'.format(self.__state))
 
   @property
+  @synchronized
   def exception(self):
-    '''
-    The exception that occured while the job executed. Accessing
-    this property while the job is pending or running will raise an
-    `InvalidStateError`.
-    '''
+    """
+    The exception that occured while the job executed. The value is #None if
+    no exception occurred.
 
-    with self.lock:
-      if self.__state in (PENDING, RUNNING):
-        raise InvalidStateError('job is {0}'.format(self.__state))
-      elif self.__state == ERROR:
-        assert self.__exception is not None
-        return self.__exception
-      elif self.__state in (RUNNING, SUCCESS):
-        assert self.__exception is None
-        return None
-      else:
-        raise RuntimeError('invalid job state {0!r}'.format(self.__state))
+    # Raises
+    InvalidState: If the job is #PENDING or #RUNNING.
+    """
+
+    if self.__state in (Job.PENDING, Job.RUNNING):
+      raise self.InvalidState('job is {0}'.format(self.__state))
+    elif self.__state == Job.ERROR:
+      assert self.__exception is not None
+      return self.__exception
+    elif self.__state in (Job.RUNNING, Job.SUCCESS, Job.CANCELLED):
+      assert self.__exception is None
+      return None
+    else:
+      raise RuntimeError('invalid job state {0!r}'.format(self.__state))
 
   @property
+  @synchronized
   def pending(self):
-    ''' True if the job is pending. '''
+    " True if the job is #PENDING. "
 
-    with self.lock:
-      return self.__state == PENDING
+    return self.__state == Job.PENDING
 
   @property
+  @synchronized
   def running(self):
-    ''' True if the job is running. '''
+    " True if the job is #RUNNING. "
 
-    with self.lock:
-      return self.__state == RUNNING
+    return self.__state == Job.RUNNING
 
   @property
+  @synchronized
   def finished(self):
-    '''
-    True if the job was run and is finished. This property sees
-    no difference in when the job was sucessful or errored.
-    '''
+    """
+    True if the job run and finished. There is no difference if the job
+    finished successfully or errored.
+    """
 
-    with self.lock:
-      return self.__state in (ERROR, SUCCESS)
+    return self.__state in (Job.ERROR, Job.SUCCESS, Job.CANCELLED)
 
   @property
+  @synchronized
   def cancelled(self):
-    '''
-    The flag that indicates if the job was cancelled. The job
-    status can still be `ERROR` or `SUCCESS` if the job was cancelled.
-    If it is successful, you can even read the `Job.result` that was
-    returned when the job was cancelled, but keep in mind that `wait()`
-    might raise `Cancelled` even if the job hasn't completed yet (for
-    instance if it doesn't react on the cancellation and continues
-    anyway).
-    '''
+    """
+    This property indicates if the job was cancelled. Note that with this flag
+    set, the job can still be in any state (eg. a pending job can also be
+    cancelled, starting it will simply not run the job).
+    """
 
-    with self.lock:
-      return self.__cancelled
+    return self.__cancelled
 
-  def _trigger_event(self, event):
-    if event is None or event not in self.__listeners:
-      raise ValueError('invalid event type: {0!r}'.format(event))
-    with self.lock:
-      # Check the event has not already been triggered, then mark
-      # the event as triggered.
-      if event in self.__event_set:
-        raise RuntimeError('event already triggered: {0!r}'.format(event))
-      self.__event_set.add(event)
-      listeners = self.__listeners[event] + self.__listeners[None]
-
-    # We use this lock to make sure that no callbacks for this Job
-    # are called simultaneously.
-    with self.__event_lock:
-      for listener in listeners:
-        # XXX: What to do on exceptions? Catch and make sure all listeners
-        # run through? What to do with the exception(s) then?
-        listener.callback(self, event)
-
+  @synchronized
   def get(self, default=None):
-    '''
-    Get the result of the Job, or return *default* if the Job state
-    is not `SUCCESS`. Unlike accessing `Job.result`, this function will
-    not raise a `RuntimeError` or re-raise the exception that happened
-    in the Job's thread.
+    """
+    Get the result of the Job, or return *default* if the job is not finished
+    or errored. This function will never explicitly raise an exception. Note
+    that the *default* value is also returned if the job was cancelled.
 
-    *New in 0.9.6*
-    '''
+    # Arguments
+    default (any): The value to return when the result can not be obtained.
+    """
 
-    with self.lock:
-      if self.__state == SUCCESS:
-        return self.__result
-      else:
-        return default
+    if not self.__cancelled and self.__state == Job.SUCCESS:
+      return self.__result
+    else:
+      return default
 
   def cancel(self):
-    '''
-    Sets the cancellation flag of the job. Note that a finished but
-    cancelled Job will be in state `SUCCESS` or `ERROR`.
-    '''
+    """
+    Cancels the job. Functions should check the #Job.cancelled flag from time
+    to time to be able to abort pre-emptively if the job was cancelled instead
+    of running forever.
+    """
 
-    cancelled = False
-    with self.lock:
-      if not self.__cancelled:
+    with synchronized(self):
+      cancelled = self.__cancelled
+      if not cancelled:
         self.__cancelled = True
-        self.condition.notify_all()
-        cancelled = True
+        notify_all(self)
 
-    if cancelled:
-      self._trigger_event(EVENT_CANCELLED)
+    if not cancelled:
+      self._trigger_event(Job.CANCELLED)
+
+  @synchronized
+  def _trigger_event(self, event):
+    """
+    Private. Triggers and event and removes all one-off listeners for that event.
+    """
+
+    if event is None or event not in self.__listeners:
+      raise ValueError('invalid event type: {0!r}'.format(event))
+
+    # Check the event has not already been triggered, then mark
+    # the event as triggered.
+    if event in self.__event_set:
+      raise RuntimeError('event already triggered: {0!r}'.format(event))
+    self.__event_set.add(event)
+    listeners = self.__listeners[event] + self.__listeners[None]
+
+    # Remove one-off listeners.
+    self.__listeners[event][:] = (l for l in self.__listeners[event] if not l.once)
+    self.__listeners[None][:] = (l for l in self.__listeners[None] if not l.once)
+
+    for listener in listeners:
+      # XXX: What to do on exceptions? Catch and make sure all listeners
+      # run through? What to do with the exception(s) then?
+      listener.callback(self, event)
 
   def add_listener(self, event, callback, once=False):
-    '''
-    Register a *callback* for the specified *event*. The function
-    will be called with the :class:`Job` as its first parameter and the
-    *event* name as the second.
+    """
+    Register a *callback* for the specified *event*. The function will be
+    called with the #Job as its first argument. If *once* is #True, the
+    listener will be removed after it has been invoked once or when the
+    job is re-started.
 
-    :param event: An event name or None to register the callback to be
-      invoked for any event.
-    :param callback: A function taking two arguments.
-    :param once: If True is passed, the listener will be removed from
-      the Job when it is re-started.
-    '''
+    Note that if the event already ocurred, *callback* will be called
+    immediately!
+
+    # Arguments
+    event (str): The name of an event, or None to register the callback to be
+      called for any event.
+    callback (callable): A function.
+    once (bool): Whether the callback is valid only once.
+    """
 
     if not callable(callback):
       raise TypeError('callback must be callable')
-
     if event not in self.__listeners:
       raise ValueError('invalid event type: {0!r}'.format(event))
 
     event_passed = False
-    with self.lock:
+    with synchronized(self):
       event_passed = (event in self.__event_set)
       if not (once and event_passed):
-        self.__listeners[event].append(_Listener(callback, once))
+        self.__listeners[event].append(Job._Listener(callback, once))
 
     # If the event already happened, we'll invoke the callback
     # immediately to make up for what it missed.
     if event_passed:
       callback(self, event)
 
-  def listen(self, event_names=None, once=False):
-    '''
-    Factory function for a function decorator that will add the
-    function to the Job's listeners. *event_names* can be a function
-    in order to decorate it immediately without requiring to actually
-    call the `listen()` method with its parameters. Otherwise, it
-    must be None to listen for all events, a single event name or a
-    list of event names.
-    '''
+  def wait(self, timeout=None):
+    """
+    Waits for the job to finish and returns the result.
 
-    if callable(event_names):
-      return self.listen()(event_names)
+    # Arguments
+    timeout (number, None): A number of seconds to wait for the result
+      before raising a #Timeout exception.
 
-    # We support multiple event types, but a single event type
-    # may also be passed directly.
-    if not isinstance(event_names, (tuple, list)):
-      event_names = [event_names]
-
-    for evname in event_names:
-      if evname not in self.__listeners:
-        raise ValueError('invalid event type: {0!r}'.format(evname))
-
-    def decorator(func):
-      for evname in event_names:
-        self.add_listener(evname, func, once)
-      return func
-    return decorator
-
-  def wait(self, raise_on_cancel=True, timeout=None):
-    '''
-    Wait for the job to finish.
-
-    :param raise_on_cancel: If set to True, this parameter causes
-      `Cancelled` to be raised when the Job was cancelled. If set
-      to False, this function will block until the Job terminates
-      even if it was cancelled.
-    :raise Timeout: If a *timeout* was specified and the timeout was
-      exceeded while waiting for the job to complete.
-    :raise Cancelled: If `Job.cancelled` was set by calling `cancel()`.
-      Note that you can still read the `Job.result` when it finished
-      executing even if it was cancelled, but this function raises
-      immediately when it was cancelled and the job might still be
-      running (eg. if it doesn't react on the cancellation and
-      continues anyway).
-    '''
+    # Raises
+    Timeout: If the timeout limit is exceeded.
+    """
 
     start_t = time.time()
-    with self.condition:
-      while self.__state == RUNNING:
-        if raise_on_cancel and self.__cancelled:
-          break
+    with synchronized(self):
+      while self.__state == Job.RUNNING and not self.__cancelled:
         if timeout is None:
-          self.condition.wait()
+          wait(self)
         else:
           time_passed = time.time() - start_t
           if time_passed > timeout:
-            raise Timeout
-          self.condition.wait(timeout - time_passed)
-      if raise_on_cancel and self.__cancelled:
-        raise Cancelled
+            raise Job.Timeout
+          wait(self, timeout - time_passed)
     return self.result
 
-  def start(self, as_thread=True, daemon=True, __state_check=True):
-    '''
-    Runs the job in a different thread if *as_thread* is True or
-    in the current thread if it is False. Raises `InvalidStateError`
-    if the job is already running.
+  def start(self, as_thread=True, daemon=False, __state_check=True):
+    """
+    Starts the job. If the job was run once before, resets it completely. Can
+    not be used while the job is running (raises #InvalidState).
 
-    **Important**: If the Job is cancelled before it is started, the
-    function will return None and no thread object if *as_thread* is
-    True, since the Job will not be started at all. The result will
-    be set to None.
+    # Arguments
+    as_thread (bool): Start the job in a separate thread. This is #True by
+      default. Classes like the #ThreadPool calls this function from its own
+      thread and passes #False for this argument.
+    daemon (bool): If a thread is created with *as_thread* set to #True,
+      defines whether the thread is started as a daemon or not. Defaults to
+      #False.
 
-    This function will remove all listeners that have been registered
-    with the *once* flag.
-    '''
+    # Returns
+    threading.Thread: If *as_thread* is #True, otherwise returns #None.
+    """
 
     if __state_check:
       # We need to manually manage the lock to be able to release it
       # pre-emptively when needed.
-      with self.lock:
-        if self.__cancelled and self.__state == PENDING:
-          # Cancel in PENDING state. Do not run the target function at all.
-          self.__state = SUCCESS
+      with synchronized(self):
+        if self.__cancelled and self.__state == Job.PENDING:
+          # Cancelled in PENDING state. Do not run the target function at all.
+          self.__state = Job.CANCELLED
           assert self.__exception is None
           assert self.__result is None
+          self._trigger_event(Job.CANCELLED)
           return None
 
-        if self.__state == RUNNING:
-          raise InvalidStateError('job is already running')
-        elif self.__state not in (PENDING, ERROR, SUCCESS):
+        if self.__state == Job.RUNNING:
+          raise Job.InvalidState('job is already running')
+        elif self.__state not in (Job.PENDING, Job.ERROR, Job.SUCCESS, Job.CANCELLED):
           raise RuntimeError('invalid job state {0!r}'.format(self.__state))
 
         # Reset the Job attributes.
-        self.__state = RUNNING
+        self.__state = Job.RUNNING
         self.__cancelled = False
         self.__result = None
         self.__exception = None
         self.__event_set.clear()
 
-        # Remove all listeners that have been registered with the
-        # "once" flag set.
+        # Remove all listeners that have been registered with the "once" flag.
         for listeners in self.__listeners.values():
           listeners[:] = (l for l in listeners if not l.once)
 
@@ -466,32 +559,30 @@ class Job(object):
       result = None
       exception = None
       try:
-        self._trigger_event(EVENT_STARTED)
         result = self.run()
-        state = SUCCESS
+        state = Job.SUCCESS
       except Exception:  # XXX: Catch BaseException?
         if self.print_exc:
           traceback.print_exc()
-        exception = ExceptionInfo(*sys.exc_info())
-        state = ERROR
+        exception = Job.ExceptionInfo(*sys.exc_info())
+        state = Job.ERROR
 
-      with self.lock:
+      with synchronized(self):
         cancelled = self.__cancelled
         self.__result = result
         self.__exception = exception
-        self.__state = state
+        self.__state = Job.CANCELLED if cancelled else state
 
-      self._trigger_event(EVENT_FINISHED)
+      self._trigger_event(state)
     finally:
-      with self.condition:
-        self.condition.notify_all()
+      with synchronized(self):
+        notify_all(self)
 
   def run(self):
-    '''
-    Overwrite this method to implement the job. The value returned
-    from this method is used as the jobs result. Exceptions will be
-    caught and stored in the `Job.exception` field.
-    '''
+    """
+    This method is the actual implementation of the job. By default, it calls
+    the target function specified in the #Job constructor.
+    """
 
     if self.__target is not None:
       return self.__target(self)
@@ -499,18 +590,29 @@ class Job(object):
 
   @staticmethod
   def factory(start_immediately=True):
-    '''
-    This is a decorator function that creates new `Job`s with
-    the wrapped function as the target.
+    """
+    This is a decorator function that creates new `Job`s with the wrapped
+    function as the target.
 
-    :param start_immediately: True if the factory should call
-      `Job.start()` immediately or False if it should return the
-      job in pending state.
-    '''
+    # Example
+    ```python
+    @Job.factory()
+    def some_longish_function(job, seconds):
+      time.sleep(seconds)
+      return 42
+
+    job = some_longish_function(2)
+    print(job.wait())
+    ```
+
+    # Arguments
+    start_immediately (bool): #True if the factory should call #Job.start()
+      immediately, #False if it should return the job in pending state.
+    """
 
     def decorator(func):
-      def wrapper():
-        job = Job(target=func)
+      def wrapper(*args, **kwargs):
+        job = Job(task=lambda j: func(j, *args, **kwargs))
         if start_immediately:
           job.start()
         return job
@@ -525,7 +627,8 @@ def as_completed(jobs):
   jobs = tuple(jobs)
   event = threading.Event()
   callback = lambda f, ev: event.set()
-  [job.add_listener(EVENT_FINISHED, callback, once=True) for job in jobs]
+  [job.add_listener(Job.SUCCESS, callback, once=True) for job in jobs]
+  [job.add_listener(Job.ERROR, callback, once=True) for job in jobs]
 
   while jobs:
     event.wait()
@@ -563,7 +666,7 @@ class ThreadPool(object):
     are created as non-daemon threads.
   '''
 
-  Timeout = Timeout
+  Timeout = Job.Timeout
 
   class _Worker(threading.Thread):
 
@@ -810,70 +913,15 @@ class EventQueue(object):
       return events
 
 
-class Synchronizable(object):
-  '''
-  Base class for objects shared among threads.
-  '''
 
-  lock_type = staticmethod(threading.RLock)
-  condition_type = staticmethod(threading.Condition)
-
-  def __new__(cls, *args, **kwargs):
-    instance = super(Synchronizable, cls).__new__(cls)
-    instance.lock = cls.lock_type()
-    instance.condition = cls.condition_type(instance.lock)
-    return instance
-
-
-def synchronized(obj):
-  '''
-  Synchronize access to *obj* or act as a decorator.
-  '''
-
-  if hasattr(obj, 'condition'):
-    return obj.condition
-  elif callable(obj):
-    @functools.wraps(obj)
-    def wrapper(self, *args, **kwargs):
-      with self.condition:
-        return obj(self, *args, **kwargs)
-    return wrapper
-  else:
-    raise TypeError('expected Synchronizable instance or callable to decorate')
-
-
-def notify(obj):
-  '''
-  Notify a thread waiting for *obj*.
-  '''
-
-  return obj.condition.notify()
-
-
-def notify_all(obj):
-  '''
-  Notify all threads waiting for *obj*.
-  '''
-
-  return obj.condition.notify_all()
-
-
-def wait(obj, timeout=None):
-  '''
-  Wait for *obj* until notified.
-  '''
-
-  if timeout is None:
-    return obj.condition.wait()
-  else:
-    return obj.condition.wait(timeout)
-
+class Empty(Exception):
+  ''' Raised by `SynchronizedDeque.get()`. '''
 
 class SynchronizedDeque(Synchronizable):
   ''' Thread-safe wrapper for the `collections.deque`. *New in 0.9.6*. '''
 
   Empty = Empty
-  Timeout = Timeout
+  Timeout = Job.Timeout
 
   def __init__(self, iterable=()):
     super(SynchronizedDeque, self).__init__()
