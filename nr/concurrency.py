@@ -33,6 +33,10 @@ urls = ['https://google.com', 'https://github.com', 'https://readthedocs.org']
 for job in as_completed(Job(target=(lambda: get(x)), start=True) for x in urls):
   print(job.result)
 ```
+
+# Members
+
+main_thread (threading._MainThread): The main-thread object.
 """
 
 import collections
@@ -51,7 +55,6 @@ except ImportError:
 
 main_thread = next(t for t in threading.enumerate()
   if isinstance(t, threading._MainThread))
-
 
 # Synchronizable API
 # ============================================================================
@@ -270,6 +273,7 @@ class Job(Synchronizable):
         raise TypeError('either task or target parameter must be specified, not both')
       task = lambda j: target()
     self.__target = task
+    self.__thread = None
     self.__state = Job.PENDING
     self.__cancelled = False
     self.__result = None
@@ -518,7 +522,7 @@ class Job(Synchronizable):
       #False.
 
     # Returns
-    threading.Thread: If *as_thread* is #True, otherwise returns #None.
+    Job: The job object itself.
     """
 
     if __state_check:
@@ -544,6 +548,7 @@ class Job(Synchronizable):
         self.__result = None
         self.__exception = None
         self.__event_set.clear()
+        self.__thread = None
 
         # Remove all listeners that have been registered with the "once" flag.
         for listeners in self.__listeners.values():
@@ -552,8 +557,11 @@ class Job(Synchronizable):
     if as_thread:
       thread = threading.Thread(target=self.start, args=(False, False, False))
       thread.setDaemon(daemon)
+      with synchronized(self):
+        assert not self.__thread or not self.__thread.running
+        self.__thread = thread
       thread.start()
-      return thread
+      return self
 
     try:
       result = None
@@ -577,6 +585,8 @@ class Job(Synchronizable):
     finally:
       with synchronized(self):
         notify_all(self)
+
+    return self
 
   def run(self):
     """
