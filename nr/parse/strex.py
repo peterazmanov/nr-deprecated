@@ -17,68 +17,58 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-'''
-`nr.utils.strex` String Processing Library
-==========================================
+"""
+Strex is a simple library to tokenize and parse languages ranging from simple
+to complex grammatics and semantics. It has been developed specifically for the
+recursive decent parser technique, although it might work well with other
+parsing techniques as well.
 
-Strex is a simple library to tokenize and parse small or even
-complex languages. It has been developed specifically for the
-recursive decent parser technique, although it might work well
-with other parsing techniques as well.
-'''
+When using Strex, the most basic class is the #Scanner which is a simple
+wrapper for a character stream counting line and column numbers and allowing
+to revert back to a previous position in the stream. Many times the #Scanner
+is already sufficient for very simple parsing tasks.
 
-import collections
+Next up is the #Lexer which converts characters yielded by the #Scanner into a
+stream of #Token#s using a set of #Rule#s.
+"""
+
 import string
 import re
 import sys
 
-__author__ = 'Niklas Rosenstein <rosensteinniklas(at)gmail.com>'
-__version__ = '1.4.1'
+from nr.types.recordclass import recordclass
 
 eof = 'eof'
 string_types = (str,) if sys.version_info[0] == 3 else (str, unicode)
 
-Cursor = collections.namedtuple('Cursor', 'index lineno colno')
-Token = collections.namedtuple('Token', 'type cursor value')
+Cursor = recordclass.new('Cursor', 'index lineno colno')
+Token = recordclass.new('Token', 'type cursor value')
 
 
 class Scanner(object):
-  ''' This class is used to step through text character by character
-  and keep track of the line and column numbers of each passed
-  character. The Scanner will only tread line-feed as a newline.
+  """
+  This class is used to step through text character by character and keep track
+  of the line and column numbers of each passed character. The Scanner will
+  only tread line-feed as a newline.
 
-  :param text:
-    The text to parse. Must be a `str` in Python 3 and may also be
+  # Parameters
+  text (str): The text to parse. Must be a `str` in Python 3 and may also be
     a `unicode` object in Python 2.
 
-  .. attribute:: text
+  # Attributes
 
-  .. attribute:: index
-
-    The index in the text.
-
-  .. attribute:: lineno
-
-    The current line number.
-
-  .. attribute:: colno
-
-    The current column number.
-
-  .. attribute:: cursor
-
-    The current `Cursor` value.
-
-  .. attribute:: char
-
-    The current character, or an empty string/unicode if the end of
-    the text was reached.
-  '''
+  text (str): The *text* passed to the constructor.
+  index (int): The cursor position in the text.
+  lineno (int): The line-number of the cursor in the text.
+  colno (int): The column-number of the cursor in the text.
+  cursor (Cursor): The combination of #index, #lineno and #colno.
+  char (str): The current character at the Scanner's position. Is
+    an empty string at the end of the #text.
+  """
 
   def __init__(self, text):
     if not isinstance(text, string_types):
       raise TypeError('expected str or unicode', type(text))
-    super(Scanner, self).__init__()
     self.text = text
     self.index = 0
     self.lineno = 1
@@ -104,7 +94,7 @@ class Scanner(object):
       return type(self.text)()
 
   def next(self):
-    ''' Move on to the next character in the scanned text. '''
+    " Move on to the next character in the text. "
 
     char = self.char
     if char == '\n':
@@ -113,110 +103,90 @@ class Scanner(object):
     else:
       self.colno += 1
     self.index += 1
+    return self
 
-  def next_get(self):
-    ''' Like `next()` but returns the new character. '''
+  def readline(self):
+    " Reads a full line from the scanner and returns it. "
 
-    self.next()
-    return self.char
+    start = end = self.index
+    while end < len(self.text):
+      if self.text[end] == '\n':
+        end += 1
+        break
+      end += 1
+    result = self.text[start:end]
+    self.index = end
+    if result.endswith('\n'):
+      self.colno = 0
+      self.lineno += 1
+    else:
+      self.colno += end - start
+    return result
+
+  def match(self, regex, flags=0):
+    """
+    Matches the specified *regex* from the current character of the *scanner*
+    and returns the result. The Scanners column and line numbers are updated
+    respectively.
+
+    # Arguments
+    regex (str, Pattern): The regex to match.
+    flags (int): The flags to use when compiling the pattern.
+    """
+
+    if isinstance(regex, str):
+      regex = re.compile(regex, flags)
+    match = regex.match(self.text, self.index)
+    if not match:
+      return None
+    start, end = match.start(), match.end()
+    lines = self.text.count('\n', start, end)
+    self.index = end
+    if lines:
+      self.colno = end - self.text.rfind('\n', start, end) - 1
+      self.lineno += lines
+    else:
+      self.colno += end - start
+    return match
 
   def restore(self, cursor):
-    ''' Moves the scanner back (or forward) to the specified cursor. '''
+    " Moves the scanner back (or forward) to the specified cursor location. "
 
     if not isinstance(cursor, Cursor):
       raise TypeError('expected Cursor object', type(cursor))
     self.index, self.lineno, self.colno = cursor
 
 
-def readline(scanner):
-  ''' Reads a full line from the *scanner* and returns it. This is
-  fast over using `Scanner.next()` to the line-feed. The resulting
-  string contains the line-feed character if present. '''
-
-  start = end = scanner.index
-  while end < len(scanner.text):
-    if scanner.text[end] == '\n':
-      end += 1
-      break
-    end += 1
-  result = scanner.text[start:end]
-  scanner.index = end
-  if result.endswith('\n'):
-    scanner.colno = 0
-    scanner.lineno += 1
-  else:
-    scanner.colno += end - start
-  return result
-
-
-def match(scanner, regex, flags=0):
-  ''' Matches the specified *regex* from the current character of the
-  *scanner* and returns a match object or None if it didn't match. The
-  Scanners column and line numbers are updated respectively. '''
-
-  if isinstance(regex, str):
-    regex = re.compile(regex, flags)
-  match = regex.match(scanner.text, scanner.index)
-  if not match:
-    return None
-  start, end = match.start(), match.end()
-  lines = scanner.text.count('\n', start, end)
-  scanner.index = end
-  if lines:
-    scanner.colno = end - scanner.text.rfind('\n', start, end) - 1
-    scanner.lineno += lines
-  else:
-    scanner.colno += end - start
-  return match
-
-
 class Lexer(object):
-  ''' This class is used to split text into `Token`s using a
-  `Scanner` and a list of `Rule`s. If *raise_invalid* is True, it
-  raises an `TokenizationError` instead of yielding an invalid
-  `Token` object.
+  """
+  This class is used to split text into #Token#s using a #Scanner and a list
+  of #Rule#s.
 
-  :param scanner: The `Scanner` to use for lexing.
-  :param rules: A list of `Rule` objects.
-  :param raise_invalid: True if an exception should be raised when
-    the stream can not be tokenized, False if it should just yield
-    an invalid token and proceed with the next character.
+  # Parameters
+  scanner (Scanner): The scanner to read from.
+  rules (list of Rule): A list of rules to match. The order in the list
+    determines the order in which the rules are matched.
 
-  .. attribute:: scanner
-
-  .. attribute:: rules
-
-  .. attribute:: rules_map
-
+  # Attributes
+  scanner (Scanner):
+  rules (list of Rule):
+  rules_map (dict of (object, Rule)):
     A dictionary mapping the rule name to the rule object. This is
-    automatically built when the Lexer is created. If the :attr:`rules`
-    are updated in the lexer directly, :meth:`update` must be called.
+    automatically built when the Lexer is created. If the #rules
+    are updated in the lexer directly, #update() must be called.
+  skippable_rules (list of Rule):
+    A list of skippable rules built from the #rules list. #update() must be
+    called if any of the rules or the list of rules are modified.
+  token (Token):
+    The current token. After the Lexer is created and #next() method has NOT
+    been called, the value of this attribute is #None. At the end of the input,
+    the token is type #eof.
+  """
 
-  .. attribute:: skippable_rules
-
-    A list of skippable rules built from the :attr:`rules` list.
-    :meth:`update` must be called if any of the rules or rules list are modified.
-
-  .. attribute:: raise_invalid
-
-  .. attribute:: skip_rules
-
-    A set of rule type IDs that will automatically be skipped by the
-    :meth:`next` method.
-
-  .. attribute:: token
-  
-    The current `Token`. After the Lexer is created and :meth:`next`
-    method has not been called, the value of this attribute is None. At
-    the end of the input, the token is type :data:`eof`.
-  '''
-
-  def __init__(self, scanner, rules=None, raise_invalid=True):
-    super(Lexer, self).__init__()
+  def __init__(self, scanner, rules=None):
     self.scanner = scanner
     self.rules = list(rules) if rules else []
     self.update()
-    self.raise_invalid = raise_invalid
     self.token = None
 
   def __repr__(self):
@@ -238,12 +208,15 @@ class Lexer(object):
   __nonzero__ = __bool__  # Python 2
 
   def update(self):
-    ''' Updates the `rules_map` dictionary and `skippable_rules` list
-    based on the `rules` list.
+    """
+    Updates the #rules_map dictionary and #skippable_rules list based on the
+    #rules list. Must be called after #rules or any of its items have been
+    modified.
 
-    Raises:
-      ValueError: if a rule name is duplicate
-      TypeError: if an item in the `rules` list is not a rule. '''
+    # Raises
+    ValueError: if a rule name is duplicate
+    TypeError: if an item in the `rules` list is not a rule.
+    """
 
     self.rules_map = {}
     self.skippable_rules = []
@@ -257,8 +230,19 @@ class Lexer(object):
         self.skippable_rules.append(rule)
 
   def expect(self, *names):
-    ''' Checks if the _current_ token matches one of the specified
-    token type names and raises `UnexpectedTokenError` if it does not. '''
+    """
+    Checks if the current #token#s type name matches with any of the specified
+    *names*. This is useful for asserting multiple valid token types at a
+    specific point in the parsing process.
+
+    # Arguments
+    names (str): One or more token type names. If zero are passed,
+      nothing happens.
+
+    # Raises
+    UnexpectedTokenError: If the current #token#s type name does not match
+      with any of the specified *names*.
+    """
 
     if not names:
       return
@@ -266,46 +250,50 @@ class Lexer(object):
       raise UnexpectedTokenError(names, self.token)
 
   def accept(self, *names, **kwargs):
-    ''' Extracts a token of one of the specified rule names and doesn't
-    error if unsuccessful. Skippable tokens might still be skipped by
-    this method.
+    """
+    Extracts a token of one of the specified rule names and doesn't error if
+    unsuccessful. Skippable tokens might still be skipped by this method.
 
-    Raises:
-      ValueError: if a rule with the specified name doesn't exist. '''
+    # Arguments
+    names (str): One or more token names that are accepted.
+    kwargs: Additional keyword arguments for #next().
+
+    # Raises
+    ValueError: if a rule with the specified name doesn't exist.
+    """
 
     return self.next(*names, as_accept=True, **kwargs)
 
   def next(self, *expectation, **kwargs):
-    ''' Parse the next token from the input and return it. If
-    `raise_invalid` is True, this method can raise `TokenizationError`.
-    The new token can also be accessed from the `token` attribute
-    after the method was called.
+    """
+    Parses the next token from the input and returns it. The new token can be
+    accessed from the #token attribute after the method was called.
 
-    If one or more arguments are specified, they must be rule names
-    that are to be expected at the current position. They will be
-    attempted to be matched first (in the specicied order). If the
-    expectation could not be met, a `UnexpectedTokenError` is raised.
+    If one or more arguments are specified, they must be rule names that are to
+    be expected at the current position. They will be attempted to be matched
+    first (in the specicied order). If the expectation could not be met, an
+    #UnexpectedTokenError is raised.
 
-    An expected Token will not be skipped, even if its rule says so.
+    An expected Token will not be skipped, even if its rule defines it so.
 
-    Arguments:
-      \*expectation: The name of one or more rules that are expected
-        from the current context of the parser. If empty, the first
-        matching token of all rules will be returned. Skippable tokens
-        will always be skipped unless specified as argument.
-      as_accept=False: If passed True, this method behaves
-        the same as the `accept()` method.
-      weighted=False: If passed True, the *\*expectation* tokens
-        are checked before the default token order.
+    # Arguments
+    expectation (str): The name of one or more rules that are expected from the
+      current position of the parser. If empty, the first matching token of ALL
+      rules will be returned. In this case, skippable tokens will be skipped.
+    as_accept (bool): If passed True, this method behaves the same as the
+      #accept() method. The default value is #False.
+    weighted (bool): If passed True, the tokens specified with *expectations*
+      are checked first, effectively giving them a higher priority than other
+      they would have from the order in the #rules list. The default value is
+      #False.
 
-    Raises:
-      ValueError: if an expectation doesn't match with a rule name.
-      UnexpectedTokenError: if an expectation is given and the
-        expectation wasn't fulfilled.
-      TokenizationError: if a token could not be generated from
-        the current position of the Scanner and `raise_invalid`
-        is True.
-    '''
+    # Raises
+    ValueError: if an expectation doesn't match with a rule name.
+    UnexpectedTokenError: Ff an expectation is given and the expectation
+      wasn't fulfilled. Only when *as_accept* is set to #False.
+    TokenizationError: if a token could not be generated from the current
+      position of the Scanner.
+    """
 
     as_accept = kwargs.pop('as_accept', False)
     weighted = kwargs.pop('weighted', False)
@@ -400,30 +388,45 @@ class Lexer(object):
 
 
 class Rule(object):
-  ''' Base class for rule objects that are capable of extracting a
-  `Token` from the current position of a `Scanner`. '''
+  """
+  Base class for rule objects that are capable of extracting a #Token from
+  the current position of a #Scanner.
+
+  # Attributes
+  name (str): The name of the rule. This name must be passed to the
+    #Token.type member when #tokenize() returns a valid token.
+  skip (bool): If #True, the rule is treated as a skippable rule. If the
+    rule is encountered in the #Lexer and matched, the generated token will
+    be discarded entirely.
+  """
 
   def __init__(self, name, skip=False):
-    super(Rule, self).__init__()
     self.name = name
     self.skip = skip
 
   def tokenize(self, scanner):
-    ''' Attempt to extract a token from the position of the *scanner*
-    and return it. If a non-`Token` instance is returned, it will be
-    used as the tokens value. Any value that evaluates to False will
-    make the Lexer assume that the rule couldn't capture a Token.
+    """
+    Attempt to extract a token from the position of the *scanner* and return it.
+    If a non-#Token instance is returned, it will be used as the tokens value.
+    Any value that evaluates to #False will make the Lexer assume that the rule
+    couldn't capture a Token.
 
-    The `Token.value` must not necessarily be a string though, it can
-    be any data type or even a complex datatype, only the user must
-    know about it and handle the tokens special. '''
+    The #Token.value must not necessarily be a string though, it can be any data
+    type or even a complex datatype, only the user must know about it and handle
+    the token in a special manner.
+    """
 
     raise NotImplementedError
 
 
 class Regex(Rule):
-  ''' A rule to match a regular expression. The `Token` generated by
-  this rule contains the match object as its value. '''
+  """
+  A rule to match a regular expression. The #Token generated by this rule
+  contains the match object as its value, not a plain string.
+
+  # Attributes
+  regex (Pattern): A compiled regular expression.
+  """
 
   def __init__(self, name, regex, flags=0, skip=False):
     super(Regex, self).__init__(name, skip)
@@ -432,15 +435,21 @@ class Regex(Rule):
     self.regex = regex
 
   def tokenize(self, scanner):
-    result = match(scanner, self.regex)
+    result = scanner.match(self.regex)
     if result is None or result.start() == result.end():
       return None
     return result
 
 
 class Keyword(Rule):
-  ''' This rule matches an exact string (optionally case insensitive)
-  from the scanners current position. '''
+  """
+  This rule matches an exact string (optionally case insensitive)
+  from the scanners current position.
+
+  # Attributes
+  string (str): The keyword string to match.
+  case_sensitive (bool): Whether matching is case-senstive or not.
+  """
 
   def __init__(self, name, string, case_sensitive=True, skip=False):
     super(Keyword, self).__init__(name, skip)
@@ -462,10 +471,16 @@ class Keyword(Rule):
 
 
 class Charset(Rule):
-  ''' This rule consumes all characters of a given set. It can be
-  specified to only match at a specific column number of the scanner.
-  This is useful to create a separate indentation token type apart
-  from the typical whitespace token. '''
+  """
+  This rule consumes all characters of a given set and returns all characters
+  it consumes.
+
+  # Attributes
+  charset (frozenset of str): A set of characters to consume.
+  at_column (int): Match the charset only at a specific column index in
+    the input text. This is useful to create a separate indentation token type
+    apart from the typical whitespace token. Defaults to #-1.
+  """
 
   def __init__(self, name, charset, at_column=-1, skip=False):
     super(Charset, self).__init__(name, skip)
@@ -484,10 +499,11 @@ class Charset(Rule):
 
 
 class TokenizationError(Exception):
-  ''' This exception is raised if the stream can not be tokenized
-  at a given position. The `Token` object that an object is initialized
-  with is an invalid token with the cursor position and current scanner
-  character as its value. '''
+  """
+  This exception is raised if the stream can not be tokenized at a given
+  position. The `Token` object that an object is initialized with is an invalid
+  token with the cursor position and current scanner character as its value.
+  """
 
   def __init__(self, token):
     if type(token) is not Token:
@@ -503,9 +519,10 @@ class TokenizationError(Exception):
 
 
 class UnexpectedTokenError(Exception):
-  ''' This exception is raised when the `Lexer.next()` method was given
-  one or more expected token types but the extracted token didn't match
-  the expected types. '''
+  """
+  This exception is raised when the #Lexer.next() method was given one or more
+  expected token types but the extracted token didn't match the expected types.
+  """
 
   def __init__(self, expectation, token):
     if not isinstance(expectation, (list, tuple)):

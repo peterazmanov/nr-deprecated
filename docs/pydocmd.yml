@@ -79,10 +79,16 @@ generate:
     - nr.parse.gitignore.IgnoreListCollection
 - parse/strex.md:
   - nr.parse.strex:
-    - nr.parse.strex.readline
-    - nr.parse.strex.match
-    - nr.parse.strex.Scanner
-    - nr.parse.strex.Lexer
+    - nr.parse.strex.Scanner:
+      - nr.parse.strex.Scanner.next
+      - nr.parse.strex.Scanner.readline
+      - nr.parse.strex.Scanner.match
+      - nr.parse.strex.Scanner.restore
+    - nr.parse.strex.Lexer:
+      - nr.parse.strex.Lexer.next
+      - nr.parse.strex.Lexer.expect
+      - nr.parse.strex.Lexer.accept
+      - nr.parse.strex.Lexer.update
     - nr.parse.strex.Rule
     - nr.parse.strex.Regex
     - nr.parse.strex.Keyword
@@ -115,7 +121,7 @@ pages:
 - Data Handling:
   - Tundras: tundras/index.md
 - Parsing:
-  - strex: parse/strex.md
+  - PEG (strex): parse/strex.md
   - .gitignore: parse/gitignore.md
 - Python Internals:
   - Bytecode Parsing: py/bytecode.md

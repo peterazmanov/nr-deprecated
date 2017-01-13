@@ -11,3 +11,12 @@ require any dependencies.
 __Run Tests__
 
     nosetests tests
+
+## Changelog
+
+### v1.3.6__
+
+__nr.parse.strex__
+
+- Move `readline()` and `match()` functions to `Scanner` class
+- Remove `Lexer(raise_invalid)` parameter and attribute (was unused)
