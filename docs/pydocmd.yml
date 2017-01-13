@@ -53,8 +53,6 @@ generate:
     - nr.tundras.TableEntity
     - nr.tundras.ValidationError
     - nr.tundras.EntityInitializationError
-- types/index.md:
-  - nr.types
 - types/enum.md:
   - nr.types.enum
   - nr.types.enum.Data
@@ -114,18 +112,18 @@ pages:
   - SynchronizedDeque: concurrency/syncdeque.md
   - EventQueue: concurrency/eventqueue.md
   - Utils: concurrency/utils.md
-- Tundras: tundras/index.md
-- Miscallenous:
-  - Archive: misc/archive.md
-  - CLI: misc/cli.md
+- Data Handling:
+  - Tundras: tundras/index.md
 - Parsing:
-  - STREX: parse/strex.md
+  - strex: parse/strex.md
   - .gitignore: parse/gitignore.md
 - Python Internals:
-  - nr.py.bytecode: py/bytecode.md
+  - Bytecode Parsing: py/bytecode.md
 - Types:
-  - nr.types: types/index.md
   - Enum: types/enum.md
   - Recordclass: types/recordclass.md
   - Singleton: types/singleton.md
   - Semantic Versioning: types/version.md
+- Miscallenous:
+  - Archive: misc/archive.md
+  - CLI: misc/cli.md

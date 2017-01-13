@@ -8,6 +8,6 @@ Cinema 4D.
 The library is compatible with Python 2 and 3 for the most part. It does not
 require any dependencies.
 
-__Run Tests__:
+__Run Tests__
 
-    nosetests nr
+    nosetests tests
