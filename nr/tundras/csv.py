@@ -38,10 +38,10 @@ if Py3:
 
 def unpack_text_io_wrapper(fp, encoding):
   """
-  If *fp* is a :class:`io.TextIOWrapper` object, this function returns
-  the underlying binary stream and the encoding of the IO-wrapper
-  object. If *encoding* is not None and does not match with the encoding
-  specified in the IO-wrapper, a :class:`RuntimeError` is raised.
+  If *fp* is a #io.TextIOWrapper object, this function returns the underlying
+  binary stream and the encoding of the IO-wrapper object. If *encoding* is not
+  None and does not match with the encoding specified in the IO-wrapper, a
+  #RuntimeError is raised.
   """
 
   if isinstance(fp, io.TextIOWrapper):
@@ -57,9 +57,8 @@ def unpack_text_io_wrapper(fp, encoding):
 
 class reader(object):
   """
-  This is an enhanced implementation of the :class:`csv.reader`
-  class that supports an *encoding* parameter. Note that the file
-  should be opened in binary mode!
+  This is an enhanced implementation of the #csv.reader class that supports an
+  *encoding* parameter. Note that the file should be opened in binary mode!
   """
 
   def __init__(self, fp, dialect=csv.excel, encoding=None, **kw):
@@ -83,12 +82,11 @@ class reader(object):
 
 class writer(object):
   """
-  This is an enhanced implementation of the :class:`csv.writer`
-  class that supports an *encoding* parameter. Note that the file
-  should be opened in binary mode!
+  This is an enhanced implementation of the #csv.writer class that supports an
+  *encoding* parameter. Note that the file should be opened in binary mode!
 
-  Note that the writer also supports casting non-string/non-text
-  types to text using the :data:`text_type`.
+  Note that the writer also supports casting non-string/non-text types to text
+  using #pycompat.text_type.
   """
 
   def __init__(self, fp, dialect=csv.excel, encoding=None, **kw):

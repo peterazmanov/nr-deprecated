@@ -23,34 +23,36 @@ from .exceptions import ValidationError
 
 class Field(object):
   """
-  This class represents a named field in a data record. It is used
-  for declaration purposes from Python code. The field name will
-  usually be bound at a later point and not at construction time
-  (eg. from a metaclass constructor).
+  This class represents a named field in a data record. It is used for
+  declaration purposes from Python code. The field name will usually be bound
+  at a later point and not at construction time (eg. from a metaclass
+  constructor).
 
-  The field class has an internal counter that counts up for each
-  instance that is created. This is used by the
-  :class:`tundras.table.TableEntity` class to order the fields.
+  The field class has an internal counter that counts up for each instance that
+  is created. This is used by the #tundras.table.TableEntity class to order the
+  fields.
 
-  :param field_type: The type of the field. Must be a type object
+  # Parameters
+
+  field_type (type): The type of the field. Must be a type object
     or None to make the field accept any Python object.
-  :param name: The name of the field. If omitted, the field is unbound.
-  :param default: The default value of a field. If this is omitted, it
-    will default to :const:`NotImplemented` and thus indicate that the
-    field is required.
-  :param default_factory: If specified, must be a callable that can
+  name (str): The name of the field. If omitted, the field is unbound.
+  default (field_type): The default value of a field. If this is omitted, it
+    will default to #NotImplemented and thus indicate that the field is
+    required.
+  default_factory (callable): If specified, must be a callable that can
     be called without arguments and return the default value for the
     field. Note that this parameter conflicts with *default* and a
-    :class:`ValueError` is raised if both are specified.
-  :param null: If this is True, the Field accepts :const:`None` as a
-    valid value even if the *field_type* would reject it.
-  :param entity: The entity that contains the field. Similar to the
+    #ValueError is raised if both are specified.
+  null (bool): If this is True, the Field accepts #None as a valid value even
+    if the *field_type* would reject it.
+  entity (object): The entity that contains the field. Similar to the
     name, this is usually bound automatically at a later point. An
     entity is usually a class object. An entity must have a `__name__`
     attribute.
-  :param adapter: A function that can convert any value to the correct
-    *field_type* or raise a :class:`ValueError` or :class:`TypeError`
-    on failure. If omitted, defaults to *field_type*.
+  adapter (callable): A function that can convert any value to the correct
+    *field_type* or raise a #ValueError or #TypeError on failure. If omitted,
+    defaults to *field_type*.
   """
 
   _instance_counter = 0
@@ -81,10 +83,9 @@ class Field(object):
 
   def __call__(self, value):
     """
-    Calls the :attr:`adapter` function of the field. If the adapter is
-    not defined, the :attr:`type` type/function is called instead. If
-    *value* is already an instance of the field's :class:`type`, *value*
-    is returned as-is.
+    Calls the #adapter function of the field. If the adapter is not defined,
+    the #type type/function is called instead. If *value* is already an
+    instance of the field's #type, *value* is returned as-is.
     """
 
     if self.type is None:
@@ -102,8 +103,7 @@ class Field(object):
 
   def check_type(self, value):
     """
-    Raises a :class:`TypeError` if *value* is not an instance of the
-    field's :class:`type`.
+    Raises a #TypeError if *value* is not an instance of the field's #type.
     """
 
     if self.null and value is None:
@@ -114,9 +114,9 @@ class Field(object):
 
   def get_default(self):
     """
-    Return the default value of the field. Returns either :attr:`default`,
-    the return value of :attr:`default_factory` or raises a
-    :class:`RuntimeError` if the field has no default value.
+    Return the default value of the field. Returns either #default, the return
+    value of #default_factory or raises a #RuntimeError if the field has no
+    default value.
     """
 
     if self.default is not NotImplemented:

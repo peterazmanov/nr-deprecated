@@ -22,8 +22,7 @@
 class ValidationError(Exception):
   """
   This exception is thrown when a field's data is invalid, ie. the
-  :attr:`Field.type` function raised either a :class:`ValueError`
-  or :class:`TypeError`.
+  #.field.Field.type function raised either a #ValueError or #TypeError.
   """
 
   def __init__(self, field, value, error):

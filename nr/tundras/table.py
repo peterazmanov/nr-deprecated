@@ -28,21 +28,20 @@ import copy
 
 class TableEntity(InlineMetaclassBase):
   """
-  This is the base for classes that represent a record in a table.
-  An instance of this class represents a row in that table. The
-  columns of that table, aka. the fields of a record, are defined
-  by creating :class:`Field` objects on class-level. Whent the class
-  is constructed, the field-names are bound and the :attr:`__fields__`
+  This is the base for classes that represent a record in a table. An instance
+  of this class represents a row in that table. The columns of that table, aka.
+  the fields of a record, are defined by creating #Field objects on class-level.
+  Whent the class is constructed, the field-names are bound and the #__fields__
   list is created.
 
-  .. code-block:: python
+  ```python
+  class Contact(TableEntity):
+    name = Field(str)
+    address = Field(str)
+    phone = Field(str)
 
-    class Contact(TableEntity):
-      name = Field(str)
-      address = Field(str)
-      phone = Field(str)
-
-    peter = Contact("Peter", "Main Street 42", "+1 49 42 42")
+  peter = Contact("Peter", "Main Street 42", "+1 49 42 42")
+  ```
   """
 
   __fields__ = []

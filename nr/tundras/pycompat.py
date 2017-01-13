@@ -30,7 +30,7 @@ iteritems = (lambda x: x.items()) if Py3 else (lambda x: x.iteritems())
 
 def get_staticmethod_func(cm):
   """
-  Returns the function wrapped by the :func:`staticmethod` *cm*.
+  Returns the function wrapped by the #staticmethod *cm*.
   """
 
   if hasattr(cm, '__func__'):

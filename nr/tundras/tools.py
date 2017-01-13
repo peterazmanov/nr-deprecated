@@ -25,7 +25,7 @@ def mro_resolve(name, bases, dict):
   """
   Given a tuple of baseclasses and a dictionary that takes precedence
   over any value in the bases, finds a value with the specified *name*
-  and returns it. Raises :class:`KeyError` if the value can not be found.
+  and returns it. Raises #KeyError if the value can not be found.
   """
 
   if name in dict:
@@ -42,24 +42,23 @@ def mro_resolve(name, bases, dict):
 
 class InlineMetaclass(type):
   """
-  This is the metaclass for the :class:`InlineMetaclassConstructor`
-  base class. It will call the special methods `__metanew__()` and
-  `__metainit__()` of the constructed class. This avoids creating
-  a new metaclass and allows to put the meta-constructor code in
-  the same class.
+  This is the metaclass for the #InlineMetaclassConstructor base class. It will
+  call the special methods `__metanew__()` and `__metainit__()` of the
+  constructed class. This avoids creating a new metaclass and allows to put the
+  meta-constructor code in the same class.
 
   Note that the implementation does not take multiple inheritance into
   account and will simply call the first method found in the MRO.
 
-  .. code-block:: python
-
-    class MyClass(metaclass=InlineMetaclass):
-      def __metanew__(meta, name, bases, dict):
-        # Do the stuff you would usually do in your metaclass.__new__()
-        return super(InlineMetaclass, meta).__new__(meta, name, bases, dict)
-      def __metainit__(cls, name, bases, dict):
-        # Do the stuff you would usually do in your metaclass.__init__()
-        pass
+  ```python
+  class MyClass(metaclass=InlineMetaclass):
+    def __metanew__(meta, name, bases, dict):
+      # Do the stuff you would usually do in your metaclass.__new__()
+      return super(InlineMetaclass, meta).__new__(meta, name, bases, dict)
+    def __metainit__(cls, name, bases, dict):
+      # Do the stuff you would usually do in your metaclass.__init__()
+      pass
+  ```
   """
 
   def __new__(cls, name, bases, dict):
