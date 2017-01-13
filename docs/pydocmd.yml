@@ -47,6 +47,12 @@ generate:
     - nr.concurrency.Clock.sleep
   - nr.concurrency.split_list_by
   - nr.concurrency.reraise
+- tundras/index.md:
+  - nr.tundras:
+    - nr.tundras.Field
+    - nr.tundras.TableEntity
+    - nr.tundras.ValidationError
+    - nr.tundras.EntityInitializationError
 - types/index.md:
   - nr.types
 - types/enum.md:
@@ -108,6 +114,7 @@ pages:
   - SynchronizedDeque: concurrency/syncdeque.md
   - EventQueue: concurrency/eventqueue.md
   - Utils: concurrency/utils.md
+- Tundras: tundras/index.md
 - Miscallenous:
   - Archive: misc/archive.md
   - CLI: misc/cli.md
