@@ -69,6 +69,10 @@ generate:
   - nr.py.bytecode:
     - nr.py.bytecode.get_stackdelta
     - nr.py.bytecode.get_assigned_name
+- py/context.md:
+  - nr.py.context.skip
+  - nr.py.context.SkippableContextManager
+  - nr.py.context.ContextSkipped
 - parse/gitignore.md:
   - nr.parse.gitignore:
     - nr.parse.gitignore.parse
@@ -121,10 +125,11 @@ pages:
 - Data Handling:
   - Tundras: tundras/index.md
 - Parsing:
-  - PEG (strex): parse/strex.md
   - .gitignore: parse/gitignore.md
+  - PEG (strex): parse/strex.md
 - Python Internals:
   - Bytecode Parsing: py/bytecode.md
+  - Context Managers: py/context.md
 - Types:
   - Enum: types/enum.md
   - Recordclass: types/recordclass.md
