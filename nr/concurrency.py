@@ -249,8 +249,7 @@ class Job(Synchronizable):
   # Events
 
   For every job, one or more callbacks can be registered which is invoked every
-  time the job transitions into a new state. See #Job.add_listener() and
-  #Job.listen().
+  time the job transitions into a new state. See #Job.add_listener()
 
   # Parameters
 
@@ -495,22 +494,25 @@ class Job(Synchronizable):
     immediately!
 
     # Arguments
-    event (str): The name of an event, or None to register the callback to be
-      called for any event.
+    event (str, list of str): The name or multiple names of an event, or None
+      to register the callback to be called for any event.
     callback (callable): A function.
     once (bool): Whether the callback is valid only once.
     """
 
     if not callable(callback):
       raise TypeError('callback must be callable')
-    if event not in self.__listeners:
-      raise ValueError('invalid event type: {0!r}'.format(event))
-
-    event_passed = False
-    with synchronized(self):
-      event_passed = (event in self.__event_set)
-      if not (once and event_passed):
-        self.__listeners[event].append(Job._Listener(callback, once))
+    if isinstance(event, str):
+      event = [event]
+    for evn in event:
+      if evn not in self.__listeners:
+        raise ValueError('invalid event type: {0!r}'.format(evn))
+    for evn in event:
+      event_passed = False
+      with synchronized(self):
+        event_passed = (evn in self.__event_set)
+        if not (once and event_passed):
+          self.__listeners[evn].append(Job._Listener(callback, once))
 
     # If the event already happened, we'll invoke the callback
     # immediately to make up for what it missed.
@@ -707,7 +709,7 @@ class ThreadPool(object):
     #ThreadPool.submit().
   """
 
-  class _Worker(threading.Thread):
+  class _Worker(Synchronizable, threading.Thread):
 
     def __init__(self, queue):
       super(ThreadPool._Worker, self).__init__()
@@ -797,7 +799,7 @@ class ThreadPool(object):
     list: A list of the #Job#s that were canceled.
     """
 
-    with synchronized(self.__deque):
+    with synchronized(self.__queue):
       jobs = self.clear()
       if cancel_current:
         jobs.extend(self.current_jobs())
@@ -805,13 +807,15 @@ class ThreadPool(object):
     [j.cancel() for j in jobs]
     return jobs
 
-  def submit(self, job, pass_job=True, args=(), kwargs=None, front=False):
+  def submit(self, task=None, target=None, args=(), kwargs=None, front=False):
     """
     Submit a new #Job to the ThreadPool.
 
     # Arguments
-    job (function, Job): Either a function that accepts *args* and *kwargs*
-      or a #Job object that is in #~Job.PENDING state.
+    task (function, Job): Either a function that accepts a #Job, *args* and
+      *kwargs* or a #Job object that is in #~Job.PENDING state.
+    target (function): A function object that accepts *args* and *kwargs*.
+      Only if *task* is not specified.
     args (list, tuple): A list of arguments to be passed to *job*, if it is
       a function.
     kwargs (dict): A dictionary to be passed as keyword arguments to *job*,
@@ -829,20 +833,24 @@ class ThreadPool(object):
     if not self.__running:
       raise RuntimeError("ThreadPool ain't running")
 
-    if isinstance(job, Job):
+    if isinstance(task, Job):
       if args or kwargs:
         raise TypeError('can not provide additional arguments for Job')
-      if job.state != Job.PENDING:
+      if task.state != Job.PENDING:
         raise RuntimeError('job is not pending')
-      job.print_exc = self.print_exc
-    elif callable(job):
+      job = task
+    elif task is not None:
       if kwargs is None:
         kwargs = {}
-      target = lambda j: job(*args, **kwargs)
-      job = Job(target=target, print_exc=self.print_exc)
+      job = Job(task=task)
+    elif target is not None:
+      if kwargs is None:
+        kwargs = {}
+      job = Job(target=target)
     else:
       raise TypeError('expected Job or callable')
 
+    job.print_exc = self.print_exc
     if front:
       self.__queue.appendleft(job)
     else:
