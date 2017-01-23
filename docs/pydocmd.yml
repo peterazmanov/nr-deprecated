@@ -114,6 +114,7 @@ generate:
     - nr.misc.cli.TimeoutError
 pages:
 - Home: index.md << ../README.md
+- Changelog: changelog.md << ../CHANGES.md
 - Concurrency API:
   - nr.concurrency: concurrency/index.md
   - Synchronizable: concurrency/synchronizable.md
@@ -126,7 +127,7 @@ pages:
   - Tundras: tundras/index.md
 - Parsing:
   - .gitignore: parse/gitignore.md
-  - PEG (strex): parse/strex.md
+  - String Processing & Lexing: parse/strex.md
 - Python Internals:
   - Bytecode Parsing: py/bytecode.md
   - Context Managers: py/context.md

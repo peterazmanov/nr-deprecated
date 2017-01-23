@@ -1,5 +1,7 @@
 # py-nr
 
+*Current Version: v1.4.0.dev0*
+
 A wide variety of Python utilities for various applications. The contents of
 this library is mainly composed of code that I developed for functionality that
 I needed in Cinema 4D plugins, though only little is actually restricted to
@@ -11,12 +13,3 @@ require any dependencies.
 __Run Tests__
 
     nosetests tests
-
-## Changelog
-
-### v1.3.6__
-
-__nr.parse.strex__
-
-- Move `readline()` and `match()` functions to `Scanner` class
-- Remove `Lexer(raise_invalid)` parameter and attribute (was unused)

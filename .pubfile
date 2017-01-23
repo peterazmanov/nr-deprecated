@@ -1,7 +1,4 @@
 versionPatterns:
   "setup.py": "version = '$VERSION'",
   "nr/__init__.py": "__version__ = '$VERSION'"
-  "docs/conf.py": [
-    "version = '$VERSION'"
-    "release = '$VERSION'"
-  ]
+  "README.md": "\\*Current Version: v$VERSION\\*"
