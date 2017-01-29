@@ -1,3 +1,10 @@
+### v1.4.1
+
+__nr.misc.archive__
+
+- `extract()` now sets file permissions and modification time
+- Add a very basic command-line interface
+
 ### v1.4.0
 
 __nr.concurrency__

@@ -18,9 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import datetime
 import os
 import shutil
 import tarfile
+import time
 import zipfile
 from functools import partial
 
@@ -35,7 +37,13 @@ def register_opener(suffix, opener=None):
   """
   Register a callback that opens an archive with the specified *suffix*.
   The object returned by the *opener* must implement the
-  :class:`tarfile.Tarfile` interface.
+  :class:`tarfile.Tarfile` interface, more specifically the following
+  methods:
+
+  - ``add(filename, arcname)``
+  - ``getnames() -> list of str``
+  - ``getmember(filename) -> TarInfo``
+  - ``extractfile(filename) -> file obj``
 
   This function can be used as a decorator when *opener* is None.
 
@@ -172,11 +180,10 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False,
     else:
       filename = name
 
+    info = archive.getmember(name)
     src = archive.extractfile(name)
     if not src:
       continue
-
-    # TODO: Also extract file metadata.
 
     try:
       filename = os.path.join(directory, filename)
@@ -185,10 +192,13 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False,
         os.makedirs(dirname)
       with builtins.open(filename, 'wb') as dst:
         shutil.copyfileobj(src, dst)
+      os.chmod(filename, info.mode)
+      os.utime(filename, (-1, info.mtime))
     finally:
       src.close()
 
-  progress_callback(len(names), len(names), None)
+  if progress_callback:
+    progress_callback(len(names), len(names), None)
 
 class Error(Exception):
   pass
@@ -207,10 +217,18 @@ def _zip_opener(file, mode, options):
   elif compression == 'lzma':
     compression = zipfile.ZIP_LZMA
 
+  def _getmember(name):
+    zinfo = obj.getinfo(name)
+    tinfo = tarfile.TarInfo(name)
+    tinfo.mode = zinfo.external_attr >> 16 & 511  # http://stackoverflow.com/a/434689/791713
+    tinfo.mtime = time.mktime(datetime.datetime(*zinfo.date_time).timetuple())
+    return tinfo
+
   obj = zipfile.ZipFile(file, mode, compression)
   obj.add = obj.write
   obj.getnames = obj.namelist
   obj.extractfile = obj.open
+  obj.getmember = _getmember
   return obj
 
 def _tar_opener(file, mode, options, _tar_mode):
@@ -222,3 +240,18 @@ register_opener('.tar', partial(_tar_opener, _tar_mode=''))
 register_opener('.tar.gz', partial(_tar_opener, _tar_mode='gz'))
 register_opener('.tar.bz2', partial(_tar_opener, _tar_mode='bz2'))
 register_opener('.tar.xz', partial(_tar_opener, _tar_mode='xz'))
+
+
+if __name__ == '__main__':
+  import click
+  @click.group()
+  def cli():
+    pass
+
+  @cli.command('extract')
+  @click.argument('filename')
+  @click.argument('directory')
+  def cli_extract(filename, directory):
+    extract(filename, directory, unpack_single_dir=True)
+
+  cli()
