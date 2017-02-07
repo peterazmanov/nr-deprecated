@@ -1,6 +1,6 @@
 # py-nr
 
-*Current Version: v1.4.1*
+*Current Version: v1.4.2*
 
 A wide variety of Python utilities for various applications. The contents of
 this library is mainly composed of code that I developed for functionality that
