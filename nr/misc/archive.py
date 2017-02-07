@@ -130,7 +130,7 @@ def open(filename=None, file=None, mode='r', suffix=None, options=None):
     raise
 
 def extract(archive, directory, suffix=None, unpack_single_dir=False,
-    check_extract_file=None, progress_callback=None):
+    check_extract_file=None, progress_callback=None, default_mode='755'):
   """
   Extract the contents of *archive* to the specified *directory*. This
   function ensures that no file is extracted outside of the target directory
@@ -147,7 +147,10 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False,
   if isinstance(archive, str):
     with open(archive, suffix=suffix) as archive:
       return extract(archive, directory, None, unpack_single_dir,
-          check_extract_file, progress_callback)
+          check_extract_file, progress_callback, default_mode)
+
+  if isinstance(default_mode, str):
+    default_mode = int(default_mode, 8)
 
   if progress_callback:
     progress_callback(-1, 0, None)
@@ -192,7 +195,7 @@ def extract(archive, directory, suffix=None, unpack_single_dir=False,
         os.makedirs(dirname)
       with builtins.open(filename, 'wb') as dst:
         shutil.copyfileobj(src, dst)
-      os.chmod(filename, info.mode)
+      os.chmod(filename, info.mode or default_mode)
       os.utime(filename, (-1, info.mtime))
     finally:
       src.close()

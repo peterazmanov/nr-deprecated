@@ -1,3 +1,11 @@
+### v1.4.2
+
+__nr.misc.archive__
+
+- add `extract(default_mode='755')` argument
+- if no file mode is contained in the `external_attr` field of a file, this
+  default mode is applied (that is, when the mode is `000`)
+
 ### v1.4.1
 
 __nr.misc.archive__
