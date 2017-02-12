@@ -103,7 +103,7 @@ class Scanner(object):
     else:
       self.colno += 1
     self.index += 1
-    return self
+    return self.char
 
   def readline(self):
     " Reads a full line from the scanner and returns it. "
@@ -466,7 +466,7 @@ class Keyword(Rule):
       if char != other_char:
         return None
       result += char
-      char = scanner.next_get()
+      char = scanner.next()
     return result
 
 
@@ -494,7 +494,7 @@ class Charset(Rule):
     result = type(char)()
     while char and char in self.charset:
       result += char
-      char = scanner.next_get()
+      char = scanner.next()
     return result
 
 

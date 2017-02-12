@@ -1,9 +1,16 @@
+### v1.4.3
+
+__nr.parse.strex__
+
+- Fix `Scanner.next()` returning the new character, not the scanner
+- Fix invalid use of `Scanner.next_get()`
+
 ### v1.4.2
 
 __nr.misc.archive__
 
-- add `extract(default_mode='755')` argument
-- if no file mode is contained in the `external_attr` field of a file, this
+- Add `extract(default_mode='755')` argument
+- If no file mode is contained in the `external_attr` field of a file, this
   default mode is applied (that is, when the mode is `000`)
 
 ### v1.4.1
