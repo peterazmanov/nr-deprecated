@@ -33,6 +33,7 @@ stream of #Token#s using a set of #Rule#s.
 """
 
 import string
+import os
 import re
 import sys
 
@@ -93,6 +94,97 @@ class Scanner(object):
     else:
       return type(self.text)()
 
+  def seek(self, offset, mode='set', renew=False):
+    """
+    Moves the cursor of the Scanner to or by *offset* depending on the *mode*.
+    Is is similar to a file's `seek()` function, however the *mode* parameter
+    also accepts the string-mode values `'set'`, `'cur'` and `'end'`.
+
+    Note that even for the `'end'` mode, the *offset* must be negative to
+    actually reach back up from the end of the file.
+
+    If *renew* is set to True, the line and column counting will always begin
+    from the start of the file. Keep in mind that this could can be very slow
+    because it has to go through each and every character until the desired
+    position is reached.
+
+    Otherwise, if *renew* is set to False, it will be decided if counting from
+    the start is shorter than counting from the current cursor position.
+    """
+
+    mapping = {os.SEEK_SET: 'set', os.SEEK_CUR: 'cur', os.SEEK_END: 'end'}
+    mode = mapping.get(mode, mode)
+    if mode not in ('set', 'cur', 'end'):
+      raise ValueError('invalid mode: "{}"'.format(mode))
+
+    # Translate the other modes into the 'set' mode.
+    if mode == 'end':
+      offset = len(self.text) + offset
+      mode = 'set'
+    elif mode == 'cur':
+      offset = self.index + offset
+      mode = 'set'
+
+    assert mode == 'set'
+    if offset < 0:
+      offset = 0
+    elif offset > len(self.text):
+      offset = len(self.text) + 1
+
+    if self.index == offset:
+      return
+
+    # Figure which path is shorter:
+    # 1) Start counting from the beginning of the file,
+    if offset <= abs(self.index - offset):
+      text, index, lineno, colno = self.text, 0, 1, 0
+      while index != offset:
+        # Find the next newline in the string.
+        nli = text.find('\n', index)
+        if nli >= offset or nli < 0:
+          colno = offset - index
+          index = offset
+          break
+        else:
+          colno = 0
+          lineno += 1
+          index = nli + 1
+
+    # 2) or step from the current position of the cursor.
+    else:
+      text, index, lineno, colno = self.text, self.index, self.lineno, self.colno
+      if offset < index:
+        backwards = True
+        increment = -1
+        find_func = lambda text, s, start: text.rfind(s, 0, start)
+      else:
+        backwards = False
+        increment = 1
+        find_func = str.find
+
+      # Step to the start of the current line.
+      index -= colno
+      colno = 0
+      if index < 0:
+        raise RuntimeError('inconsistent cursor position')
+
+      while index != offset:
+        # Find the next newline in the string.
+        nli = find_func(text, '\n', index)
+        if nli < 0 or (backwards and nli <= offset) or (not backwards and nli >= offset):
+          colno = (offset - nli - 1) if backwards else (offset - index)
+          index = offset
+          break
+        else:
+          colno = 0
+          lineno += increment
+          index = nli + increment
+
+    assert lineno >= 1
+    assert colno >= 0
+    assert index == offset
+    self.index, self.lineno, self.colno = index, lineno, colno
+
   def next(self):
     " Move on to the next character in the text. "
 
@@ -148,6 +240,17 @@ class Scanner(object):
     else:
       self.colno += end - start
     return match
+
+  def getmatch(self, regex, group=0, flags=0):
+    """
+    The same as #Scanner.match(), but returns the captured group rather than
+    the regex match object, or None if the pattern didn't match.
+    """
+
+    match = self.match(regex, flags)
+    if match:
+      return match.group(group)
+    return None
 
   def restore(self, cursor):
     " Moves the scanner back (or forward) to the specified cursor location. "

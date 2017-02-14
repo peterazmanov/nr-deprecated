@@ -1,3 +1,10 @@
+### v1.4.4
+
+__nr.parse.strex__
+
+- Add `Scanner.seek()` method
+- Add `Scanner.getmatch()` method
+
 ### v1.4.3
 
 __nr.parse.strex__
