@@ -1,4 +1,4 @@
-site_name: Welcome to pydoc-markdown
+site_name: nr v1.4.5 Package Documentation
 repo_url: https://github.com/NiklasRosenstein/py-nr
 generate:
 - concurrency/index.md:
