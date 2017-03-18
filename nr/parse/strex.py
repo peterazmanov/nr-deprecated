@@ -43,7 +43,7 @@ eof = 'eof'
 string_types = (str,) if sys.version_info[0] == 3 else (str, unicode)
 
 Cursor = recordclass.new('Cursor', 'index lineno colno')
-Token = recordclass.new('Token', 'type cursor value')
+Token = recordclass.new('Token', 'type cursor value string_repr')
 
 
 class Scanner(object):
@@ -417,7 +417,7 @@ class Lexer(object):
       # Stop if we reached the end of the input.
       cursor = self.scanner.cursor
       if not self.scanner:
-        token = Token(eof, cursor, None)
+        token = Token(eof, cursor, None, None)
         break
 
       value = None
@@ -458,11 +458,15 @@ class Lexer(object):
       if not value:
         if as_accept:
           return None
-        token = Token(None, cursor, self.scanner.char)
+        token = Token(None, cursor, self.scanner.char, None)
       else:
         assert rule, "we should have a rule by now"
         if type(value) is not Token:
-          value = Token(rule.name, cursor, value)
+          if isinstance(value, tuple):
+            value, string_repr = value
+          else:
+            string_repr = None
+          value = Token(rule.name, cursor, value, string_repr)
         token = value
 
         expected = rule.name in expectation
@@ -541,7 +545,7 @@ class Regex(Rule):
     result = scanner.match(self.regex)
     if result is None or result.start() == result.end():
       return None
-    return result
+    return result, result.group()
 
 
 class Keyword(Rule):
@@ -647,5 +651,5 @@ class UnexpectedTokenError(Exception):
     else:
       message += '{' + ','.join(map(str, self.expectation)) + '}'
     return message + ', got "{0}" instead (value={1!r} at {2}:{3})'.format(
-      self.token.type, self.token.value, self.token.cursor.lineno,
-      self.token.cursor.colno)
+      self.token.type, self.token.string_repr or self.token.value,
+      self.token.cursor.lineno, self.token.cursor.colno)
