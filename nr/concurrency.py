@@ -29,7 +29,7 @@ Compatible with Python 2 and 3.
 from nr.concurrency import Job, as_completed
 from requests import get
 urls = ['https://google.com', 'https://github.com', 'https://readthedocs.org']
-for job in as_completed(Job(target=(lambda: get(x)), start=True) for x in urls):
+for job in as_completed(Job((lambda: get(x)), start=True) for x in urls):
   print(job.result)
 ```
 
@@ -298,14 +298,18 @@ class Job(Synchronizable):
     operation (eg. reading the result while the job is still running).
     """
 
-  def __init__(self, task=None, target=None, name=None, start=False, data=None, print_exc=True):
+  def __init__(self, target=None, task=None, name=None, start=False, data=None,
+               print_exc=True, args=None, kwargs=None):
     super(Job, self).__init__()
     if target is not None:
       if task is not None:
         raise TypeError('either task or target parameter must be specified, not both')
-      task = lambda j: target()
+      task = lambda job, *args, **kwargs: target(*args, **kwargs)
+
     self.__target = task
     self.__thread = None
+    self.__args = () if args is None else args
+    self.__kwargs = {} if kwargs is None else {}
     self.__state = Job.PENDING
     self.__cancelled = False
     self.__result = None
@@ -532,7 +536,7 @@ class Job(Synchronizable):
     """
 
     def cond(self):
-      return self.__state != Job.RUNNING or self.__cancelled
+      return self.__state not in (Job.PENDING, Job.RUNNING) or self.__cancelled
     if not wait_for_condition(self, cond, timeout):
       raise Job.Timeout
     return self.result
@@ -624,7 +628,7 @@ class Job(Synchronizable):
     """
 
     if self.__target is not None:
-      return self.__target(self)
+      return self.__target(self, *self.__args, **self.__kwargs)
     raise NotImplementedError
 
   @staticmethod
@@ -734,15 +738,19 @@ class ThreadPool(object):
           with self.lock:
             self.current = None
 
-  def __init__(self, max_workers, print_exc=True):
+  def __init__(self, max_workers, print_exc=True, start=True):
     super(ThreadPool, self).__init__()
+    start = bool(start)
     self.__queue = SynchronizedDeque()
     self.__threads = [self._Worker(self.__queue) for i in range(max_workers)]
-    self.__running = True
+    self.__running = start
     self.print_exc = print_exc
-    [t.start() for t in self.__threads]
+    if start:
+      [t.start() for t in self.__threads]
 
   def __enter__(self):
+    if not self.__running:
+      [t.start() for t in self.__threads]
     return self
 
   def __exit__(self, exc_type, exc_value, exc_tb):
@@ -807,7 +815,7 @@ class ThreadPool(object):
     [j.cancel() for j in jobs]
     return jobs
 
-  def submit(self, task=None, target=None, args=(), kwargs=None, front=False):
+  def submit(self, target=None, task=None, args=(), kwargs=None, front=False):
     """
     Submit a new #Job to the ThreadPool.
 
@@ -842,11 +850,11 @@ class ThreadPool(object):
     elif task is not None:
       if kwargs is None:
         kwargs = {}
-      job = Job(task=task)
+      job = Job(task=task, args=args, kwargs=kwargs)
     elif target is not None:
       if kwargs is None:
         kwargs = {}
-      job = Job(target=target)
+      job = Job(target=target, args=args, kwargs=kwargs)
     else:
       raise TypeError('expected Job or callable')
 

@@ -1,3 +1,12 @@
+### v1.4.6
+
+__nr.concurrency__
+
+- Job.wait() can now be called while Job is pending (useful for ThreadPool jobs)
+- update ThreadPool.submit() interface and Job() constructor interface (swap task and target parameters)
+- add Job(args, kwargs) parameters
+
+
 ### v1.4.4
 
 __nr.parse.strex__
