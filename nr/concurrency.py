@@ -738,27 +738,33 @@ class ThreadPool(object):
           with self.lock:
             self.current = None
 
-  def __init__(self, max_workers, print_exc=True, start=True):
+  def __init__(self, max_workers, print_exc=True):
     super(ThreadPool, self).__init__()
-    start = bool(start)
     self.__queue = SynchronizedDeque()
     self.__threads = [self._Worker(self.__queue) for i in range(max_workers)]
-    self.__running = start
+    self.__running = False
     self.print_exc = print_exc
-    if start:
-      [t.start() for t in self.__threads]
 
   def __enter__(self):
-    if not self.__running:
-      [t.start() for t in self.__threads]
+    self.start()
     return self
 
   def __exit__(self, exc_type, exc_value, exc_tb):
     self.shutdown(wait=True)
-    return False
 
   def __len__(self):
     return len(self.__queue)
+
+  def start(self):
+    """
+    Starts the #ThreadPool. Must be ended with #stop(). Use the context-manager
+    interface to ensure starting and the #ThreadPool.
+    """
+
+    if self.__running:
+      raise RuntimeError('ThreadPool already running')
+    [t.start() for t in self.__threads]
+    self.__running = True
 
   def pending_jobs(self):
     """

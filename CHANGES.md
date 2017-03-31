@@ -5,6 +5,9 @@ __nr.concurrency__
 - Job.wait() can now be called while Job is pending (useful for ThreadPool jobs)
 - update ThreadPool.submit() interface and Job() constructor interface (swap task and target parameters)
 - add Job(args, kwargs) parameters
+- add ThreadPool.start()
+- ThreadPool.__enter__() can not be used when the pool already started
+- ThreadPool no longer starts when it is created
 
 
 ### v1.4.4
