@@ -56,5 +56,5 @@ setup(
   author = 'Niklas Rosenstein',
   author_email = 'rosensteinniklas@gmail.com',
   packages = find_packages(),
-  install_requires = [str(x.req) for x in parse_requirements('requirements.txt')],
+  install_requires = [],
 )
