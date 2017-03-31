@@ -8,7 +8,8 @@ __nr.concurrency__
 - add ThreadPool.start()
 - ThreadPool.__enter__() can not be used when the pool already started
 - ThreadPool no longer starts when it is created
-
+- add ThreadPool.submit_multiple()
+- add JobCollection class
 
 ### v1.4.4
 

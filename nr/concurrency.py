@@ -907,6 +907,35 @@ class ThreadPool(object):
       for thread in self.__threads:
         thread.join()
 
+  def submit_multiple(self, functions, target=False, task=False):
+    """
+    Submits a #Job for each element in *function* and returns a #JobCollection.
+    """
+
+    if target or not task:
+      return JobCollection([self.submit(target=func) for func in functions])
+    else:
+      return JobCollection([self.submit(task=func) for func in functions])
+
+
+class JobCollection(object):
+  """
+  A list of #Job objects. Provides useful functions for querying results.
+  """
+
+  def __init__(self, jobs):
+    self.jobs = jobs
+
+  def __iter__(self):
+    return iter(self.jobs)
+
+  def wait(self):
+    return [j.wait() for j in self]
+
+  def as_completed(self):
+    return as_completed(self)
+
+
 
 # EventQueue API
 # ============================================================================
