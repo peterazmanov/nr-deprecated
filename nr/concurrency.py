@@ -277,6 +277,12 @@ class Job(Synchronizable):
 
   print_exc (bool): Whether to print the traceback of exceptions ocurring in
     the #Job.run() or #Job.target or not. Defaults to #True.
+
+  dispose_inputs (bool): Should be used for jobs that have memory intensive
+    input data, to eventually allow the input data to be deallocated due to the
+    dropped reference count. Settings this to True will cause all input data to
+    be disposed after the Job finished executing (the worker function, args,
+    kwargs, clearing all listeners and userdata).
   """
 
   PENDING = 'pending'
@@ -299,7 +305,7 @@ class Job(Synchronizable):
     """
 
   def __init__(self, target=None, task=None, name=None, start=False, data=None,
-               print_exc=True, args=None, kwargs=None):
+               print_exc=True, args=None, kwargs=None, dispose_inputs=False):
     super(Job, self).__init__()
     if target is not None:
       if task is not None:
@@ -316,6 +322,7 @@ class Job(Synchronizable):
     self.__exception = None
     self.__listeners = {None: [], Job.SUCCESS: [], Job.ERROR: [], Job.CANCELLED: []}
     self.__event_set = set()
+    self.__dispose_inputs = dispose_inputs
     self.name = name
     self.data = data
     self.print_exc = print_exc
@@ -618,6 +625,13 @@ class Job(Synchronizable):
     finally:
       with synchronized(self):
         notify_all(self)
+      if self.__dispose_inputs:
+        self.__target = None
+        self.__args = None
+        self.__kwargs = None
+        self.data = None
+        for listeners in self.__listeners.values():
+          listeners[:] = []
 
     return self
 
@@ -738,11 +752,12 @@ class ThreadPool(object):
           with self.lock:
             self.current = None
 
-  def __init__(self, max_workers, print_exc=True):
+  def __init__(self, max_workers, print_exc=True, dispose_inputs=False):
     super(ThreadPool, self).__init__()
     self.__queue = SynchronizedDeque()
     self.__threads = [self._Worker(self.__queue) for i in range(max_workers)]
     self.__running = False
+    self.dispose_inputs = dispose_inputs
     self.print_exc = print_exc
 
   def __enter__(self):
@@ -821,7 +836,8 @@ class ThreadPool(object):
     [j.cancel() for j in jobs]
     return jobs
 
-  def submit(self, target=None, task=None, args=(), kwargs=None, front=False):
+  def submit(self, target=None, task=None, args=(), kwargs=None, front=False,
+             dispose_inputs=None):
     """
     Submit a new #Job to the ThreadPool.
 
@@ -846,6 +862,8 @@ class ThreadPool(object):
 
     if not self.__running:
       raise RuntimeError("ThreadPool ain't running")
+    if dispose_inputs is None:
+      dispose_inputs = self.dispose_inputs
 
     if isinstance(task, Job):
       if args or kwargs:
@@ -856,11 +874,11 @@ class ThreadPool(object):
     elif task is not None:
       if kwargs is None:
         kwargs = {}
-      job = Job(task=task, args=args, kwargs=kwargs)
+      job = Job(task=task, args=args, kwargs=kwargs, dispose_inputs=dispose_inputs)
     elif target is not None:
       if kwargs is None:
         kwargs = {}
-      job = Job(target=target, args=args, kwargs=kwargs)
+      job = Job(target=target, args=args, kwargs=kwargs, dispose_inputs=dispose_inputs)
     else:
       raise TypeError('expected Job or callable')
 

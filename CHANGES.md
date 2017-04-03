@@ -1,3 +1,7 @@
+### v1.4.7
+
+- add Job(dispose_inputs) and ThreadPool(dispose_inputs)
+
 ### v1.4.6
 
 __nr.concurrency__
