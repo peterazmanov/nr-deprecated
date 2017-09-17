@@ -64,3 +64,19 @@ def test_get_assigned_name():
     # get_assigned_name() branch must be first part of the expression.
     spam = [42] + [get_assigned_name(_getframe())] + ["bar"]
     assert "spam" == spam[0]
+
+  def target1(inputs):
+    return (inputs, get_assigned_name(_getframe(1)))
+
+  def target2(name=None):
+    if not name:
+      try:
+        return get_assigned_name(_getframe(1))
+      except RuntimeError:
+        return 'target2-default'
+
+  mytarget = target1(
+    inputs = [target2()]
+  )
+  assert_equals(mytarget[1], 'mytarget')
+  assert_equals(mytarget[0][0], 'target2-default')

@@ -124,9 +124,7 @@ def _build_opstackd():
     # 'MAKE_CLOSURE':
     'BUILD_SLICE': lambda op: 1 - op.arg,
     # 'EXTENDED_ARG':
-    'CALL_FUNCTION_VAR': lambda op: 1 - _call_function_argc(op.arg),
     'CALL_FUNCTION_KW': lambda op: 1 - _call_function_argc(op.arg),
-    'CALL_FUNCTION_VAR_KW': lambda op: 1 - _call_function_argc(op.arg),
   }
 
   if sys.version >= '3.5':
@@ -138,6 +136,12 @@ def _build_opstackd():
       'GET_AWAITABLE': 0,
       'GET_AITER': 0,
       'GET_ANEXT': 0,
+    })
+
+  if sys.version <= '3.5':
+    result.update({
+      'CALL_FUNCTION_VAR': lambda op: 1 - _call_function_argc(op.arg),
+      'CALL_FUNCTION_VAR_KW': lambda op: 1 - _call_function_argc(op.arg),
     })
 
   for code in dis.opmap.keys():
