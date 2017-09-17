@@ -41,7 +41,7 @@ def test_opstackd_integrity():
     assert_in(key, dis.opname)
 
 @py3only
-def test_get_assigned_name():
+def test_get_assigned_name_simple():
   """
   Test `magic.get_assigned_name()` in various use cases.
   """
@@ -65,6 +65,9 @@ def test_get_assigned_name():
     spam = [42] + [get_assigned_name(_getframe())] + ["bar"]
     assert "spam" == spam[0]
 
+@py3only
+def test_get_assigned_name_complex():
+
   def target1(inputs):
     return (inputs, get_assigned_name(_getframe(1)))
 
@@ -72,7 +75,7 @@ def test_get_assigned_name():
     if not name:
       try:
         return get_assigned_name(_getframe(1))
-      except RuntimeError:
+      except ValueError:
         return 'target2-default'
 
   mytarget = target1(

@@ -221,8 +221,8 @@ def get_assigned_name(frame):
         raise ValueError('not a top-level expression')
 
       if op.opname.startswith('CALL_FUNCTION'):
-        # Chained function call, reset.
-        result = ''
+        # Chained or nested function call.
+        raise ValueError('inside a chained or nested function call')
       elif op.opname == 'LOAD_ATTR':
         result += op.argval + '.'
 
