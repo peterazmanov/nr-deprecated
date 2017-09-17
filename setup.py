@@ -48,7 +48,7 @@ def readme():
 
 setup(
   name = 'nr',
-  version = '1.4.6',
+  version = '1.4.7',
   license = 'MIT',
   description = 'A Collection of small Python libraries.',
   long_description = readme(),

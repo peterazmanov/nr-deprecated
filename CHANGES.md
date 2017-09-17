@@ -1,6 +1,7 @@
 ### v1.4.7
 
 - add Job(dispose_inputs) and ThreadPool(dispose_inputs)
+- Fix `nr.py.bytecode.get_assigned_name()` in Python 3.6
 
 ### v1.4.6
 
