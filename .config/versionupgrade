@@ -1,0 +1,5 @@
+# Configuration file for `deft versionupgrade` (see https://github.com/NiklasRosenstein/deft)
+tag v{VERSION}
+upgrade setup.py:  version = '{VERSION}'
+upgrade nr/__init__.py:__version__ = '{VERSION}'
+upgrade README.md:\*Current Version: v{VERSION}\*
