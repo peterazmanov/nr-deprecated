@@ -1,20 +1,40 @@
+### v1.4.8
+
+__nr.parse.strex__
+
+- Change `Lexer` now supports multiple rules with the same name
+
 ### v1.4.7
 
-- add Job(dispose_inputs) and ThreadPool(dispose_inputs)
-- Fix `nr.py.bytecode.get_assigned_name()` in Python 3.6
+__nr.py.bytecode__
 
-### v1.4.6
+- Fix `get_assigned_name()` now wirks with Python 3.6
+- Add testcase for nested calls of `get_assigned_name()`
 
 __nr.concurrency__
 
-- Job.wait() can now be called while Job is pending (useful for ThreadPool jobs)
-- update ThreadPool.submit() interface and Job() constructor interface (swap task and target parameters)
-- add Job(args, kwargs) parameters
-- add ThreadPool.start()
-- ThreadPool.__enter__() can not be used when the pool already started
-- ThreadPool no longer starts when it is created
-- add ThreadPool.submit_multiple()
-- add JobCollection class
+- Add `Job(dispose_inputs)` parameter
+- Add `ThreadPool(dispose_inputs)` parameter
+
+### v1.4.6
+
+__nr.parse.concurrency__
+
+- Change `Job.wait()` can now be called while Job is pending
+- Change `ThreadPool.submit()` interface
+- Change `ThreadPool` no longer starts immediately when created
+- Change `ThreadPool.__enter__()` can not be used when the pool already started
+- Add `Job(args, kwargs)` parameters
+- Add `ThreadPool.start()` method
+- Add `ThreadPool.submit_multiple()` method
+- Add `JobCollection` class
+
+### v1.4.5
+
+__nr.parse.strex__
+
+- Add `Token.string_repr`
+- Change `Rule.tokenize()` can now return a tuple of `(value, string_repr)`
 
 ### v1.4.4
 
