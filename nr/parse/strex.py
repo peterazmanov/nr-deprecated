@@ -168,13 +168,12 @@ class Scanner(object):
       if index < 0:
         raise RuntimeError('inconsistent cursor position')
 
-      while index != offset:
+      while index != offset or colno < 0:
         # Find the next newline in the string.
         nli = find_func(text, '\n', index)
         if nli < 0 or (backwards and nli <= offset) or (not backwards and nli >= offset):
           colno = (offset - nli - 1) if backwards else (offset - index)
           index = offset
-          break
         else:
           colno = 0
           lineno += increment
