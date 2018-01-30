@@ -1,3 +1,9 @@
+### v1.4.9
+
+__nr.parse.strex__
+
+- Fix `Scanner.seek()` when going backwards
+
 ### v1.4.8
 
 __nr.parse.strex__
