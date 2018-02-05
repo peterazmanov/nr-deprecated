@@ -1,3 +1,10 @@
+### v1.4.10
+
+__nr.parse.strex__
+
+- More fix to `Scanner.seek()` going backwards from current cursor position
+- Add testcase for `Scanner.seek()`
+
 ### v1.4.9
 
 __nr.parse.strex__

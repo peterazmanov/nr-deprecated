@@ -153,31 +153,30 @@ class Scanner(object):
     # 2) or step from the current position of the cursor.
     else:
       text, index, lineno, colno = self.text, self.index, self.lineno, self.colno
-      if offset < index:
-        backwards = True
-        increment = -1
-        find_func = lambda text, s, start: text.rfind(s, 0, start)
-      else:
-        backwards = False
-        increment = 1
-        find_func = str.find
 
-      # Step to the start of the current line.
-      index -= colno
-      colno = 0
-      if index < 0:
-        raise RuntimeError('inconsistent cursor position')
-
-      while index != offset or colno < 0:
-        # Find the next newline in the string.
-        nli = find_func(text, '\n', index)
-        if nli < 0 or (backwards and nli <= offset) or (not backwards and nli >= offset):
-          colno = (offset - nli - 1) if backwards else (offset - index)
-          index = offset
-        else:
-          colno = 0
-          lineno += increment
-          index = nli + increment
+      if offset < index:  # backwards
+        while index != offset:
+          nli = text.rfind('\n', 0, index)
+          if nli < 0 or nli <= offset:
+            if text[offset] == '\n':
+              assert (offset - nli) == 0, (offset, nli)
+              nli = text.rfind('\n', 0, index-1)
+              lineno -= 1
+            colno = offset - nli - 1
+            index = offset
+            break
+          else:
+            lineno -= 1
+            index = nli - 1
+      else:  # forwards
+        while index != offset:
+          nli = text.find('\n', index)
+          if nli < 0 or nli >= offset:
+            colno = offset - index
+            index = offset
+          else:
+            lineno += 1
+            index = nli + 1
 
     assert lineno >= 1
     assert colno >= 0
