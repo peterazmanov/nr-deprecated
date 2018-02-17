@@ -23,7 +23,10 @@
 import argparse
 import sys
 
-commands = ['archive', 'py.blob', 'versionupgrade']
+commands = ['archive', 'grablicense', 'py.blob', 'versionupgrade']
+command_map = {
+  'grablicense': 'tools.grablicense'
+}
 
 def main(prog=None, argv=None):
   parser = argparse.ArgumentParser(prog=prog)
@@ -33,7 +36,8 @@ def main(prog=None, argv=None):
   if not args.command:
     parser.print_usage()
     sys.exit(0)
-  module = __import__('nr.' + args.command, fromlist=[None])
+  module_name = 'nr.' + command_map.get(args.command, args.command)
+  module = __import__(module_name, fromlist=[None])
   sys.exit(module.main(parser.prog + ' ' + args.command, args.argv))
 
 if __name__ == '__main__':
