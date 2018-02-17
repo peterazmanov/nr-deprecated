@@ -1,15 +1,24 @@
-# py-nr
+## `nr` &ndash; Compound utility library and command-line tools for Python 2/3
 
-*Current Version: v1.4.10*
+This library contains a variety of Python programming utilities that didn't
+make it into separate modules. Additionally, this library comes with a bunch
+of command-line tools.
 
-A wide variety of Python utilities for various applications. The contents of
-this library is mainly composed of code that I developed for functionality that
-I needed in Cinema 4D plugins, though only little is actually restricted to
-Cinema 4D.
+### Components
 
-The library is compatible with Python 2 and 3 for the most part. It does not
-require any dependencies.
+* `nr.archive` &ndash; Archive handling abstraction
+* `nr.concurrency` &ndash; Job scheduling and threaded event processing
+* `nr.enum` &ndash; Python 2/3 compatible enumeration class
+* `nr.gitignore` &ndash; Parser and evaluator for `.gitignore` files
+* `nr.py` &ndash; (Mostly) Generic Python programming tools
+* `nr.recordclass` &ndash; Mutable namedtuples with support for default args
+* `nr.strex` &ndash; String scanning and lexing facilities
+* `nr.version` &ndash; Semantic version parser and evaluator
 
-__Run Tests__
+### Testing
 
     nosetests tests
+
+---
+
+<p align="center">Copyright &copy; 2018 Niklas Rosenstein</p>

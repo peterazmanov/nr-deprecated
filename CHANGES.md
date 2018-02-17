@@ -1,3 +1,9 @@
+### v2.0.0
+
+* Update module structure
+* Removed `nr.misc.cli` module
+* Removed `nr.types.singleton` module
+
 ### v1.4.10
 
 __nr.parse.strex__

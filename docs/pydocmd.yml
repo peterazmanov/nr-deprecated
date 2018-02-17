@@ -1,4 +1,4 @@
-site_name: nr v1.4.5 Package Documentation
+site_name: nr v2.0.0 Package Documentation
 repo_url: https://github.com/NiklasRosenstein/py-nr
 generate:
 - concurrency/index.md:
@@ -47,24 +47,6 @@ generate:
     - nr.concurrency.Clock.sleep
   - nr.concurrency.split_list_by
   - nr.concurrency.reraise
-- tundras/index.md:
-  - nr.tundras:
-    - nr.tundras.Field
-    - nr.tundras.TableEntity
-    - nr.tundras.ValidationError
-    - nr.tundras.EntityInitializationError
-- types/enum.md:
-  - nr.types.enum
-  - nr.types.enum.Data
-  - nr.types.enum.Enumeration
-- types/recordclass.md:
-  - nr.types.recordclass.recordclass
-- types/singleton.md:
-  - nr.types.singleton:
-    - nr.types.singleton.make_singleton
-- types/version.md:
-  - nr.types.version.Version
-  - nr.types.version.VersionCriteria
 - py/bytecode.md:
   - nr.py.bytecode:
     - nr.py.bytecode.get_stackdelta
@@ -73,45 +55,62 @@ generate:
   - nr.py.context.skip
   - nr.py.context.SkippableContextManager
   - nr.py.context.ContextSkipped
-- parse/gitignore.md:
-  - nr.parse.gitignore:
-    - nr.parse.gitignore.parse
-    - nr.parse.gitignore.get_defaults
-    - nr.parse.gitignore.walk
-    - nr.parse.gitignore.Pattern
-    - nr.parse.gitignore.IgnoreList
-    - nr.parse.gitignore.IgnoreListCollection
-- parse/strex.md:
-  - nr.parse.strex:
-    - nr.parse.strex.Scanner:
-      - nr.parse.strex.Scanner.next
-      - nr.parse.strex.Scanner.readline
-      - nr.parse.strex.Scanner.match
-      - nr.parse.strex.Scanner.restore
-    - nr.parse.strex.Lexer:
-      - nr.parse.strex.Lexer.next
-      - nr.parse.strex.Lexer.expect
-      - nr.parse.strex.Lexer.accept
-      - nr.parse.strex.Lexer.update
-    - nr.parse.strex.Rule
-    - nr.parse.strex.Regex
-    - nr.parse.strex.Keyword
-    - nr.parse.strex.Charset
-    - nr.parse.strex.TokenizationError
-    - nr.parse.strex.UnexpectedTokenError
-- misc/archive.md:
-  - nr.misc.archive:
-    - nr.misc.archive.open
-    - nr.misc.archive.extract
-    - nr.misc.archive.register_opener
-    - nr.misc.archive.get_opener
-    - nr.misc.archive.Error
-    - nr.misc.archive.UnknownArchive
-- misc/cli.md:
-  - nr.misc.cli:
-    - nr.misc.cli.Cli
-    - nr.misc.cli.Response
-    - nr.misc.cli.TimeoutError
+- py/meta.md:
+  - nr.py.meta.mro_resolve
+  - nr.py.meta.InlineMetaclass
+  - nr.py.meta.InlineMetaclassBase
+- tundras/index.md:
+  - nr.tundras:
+    - nr.tundras.Field
+    - nr.tundras.TableEntity
+    - nr.tundras.ValidationError
+    - nr.tundras.EntityInitializationError
+- enum.md:
+  - nr.enum
+  - nr.enum.Data
+  - nr.enum.Enumeration
+- recordclass.md:
+  - nr.recordclass.recordclass
+- singleton.md:
+  - nr.singleton:
+    - nr.singleton.make_singleton
+- version.md:
+  - nr.version.Version
+  - nr.version.VersionCriteria
+- gitignore.md:
+  - nr.gitignore:
+    - nr.gitignore.parse
+    - nr.gitignore.get_defaults
+    - nr.gitignore.walk
+    - nr.gitignore.Pattern
+    - nr.gitignore.IgnoreList
+    - nr.gitignore.IgnoreListCollection
+- strex.md:
+  - nr.strex:
+    - nr.strex.Scanner:
+      - nr.strex.Scanner.next
+      - nr.strex.Scanner.readline
+      - nr.strex.Scanner.match
+      - nr.strex.Scanner.restore
+    - nr.strex.Lexer:
+      - nr.strex.Lexer.next
+      - nr.strex.Lexer.expect
+      - nr.strex.Lexer.accept
+      - nr.strex.Lexer.update
+    - nr.strex.Rule
+    - nr.strex.Regex
+    - nr.strex.Keyword
+    - nr.strex.Charset
+    - nr.strex.TokenizationError
+    - nr.strex.UnexpectedTokenError
+- archive.md:
+  - nr.archive:
+    - nr.archive.open
+    - nr.archive.extract
+    - nr.archive.register_opener
+    - nr.archive.get_opener
+    - nr.archive.Error
+    - nr.archive.UnknownArchive
 pages:
 - Home: index.md << ../README.md
 - Changelog: changelog.md << ../CHANGES.md
@@ -126,16 +125,16 @@ pages:
 - Data Handling:
   - Tundras: tundras/index.md
 - Parsing:
-  - .gitignore: parse/gitignore.md
-  - String Processing & Lexing: parse/strex.md
-- Python Internals:
+  - .gitignore: gitignore.md
+  - String Processing & Lexing: strex.md
+- Python Internals & Tools:
   - Bytecode Parsing: py/bytecode.md
   - Context Managers: py/context.md
+  - Metaclasses: py/meta.md
 - Types:
-  - Enum: types/enum.md
-  - Recordclass: types/recordclass.md
-  - Singleton: types/singleton.md
-  - Semantic Versioning: types/version.md
+  - Enum: enum.md
+  - Recordclass: recordclass.md
+  - Singleton: singleton.md
+  - Semantic Versioning: version.md
 - Miscallenous:
-  - Archive: misc/archive.md
-  - CLI: misc/cli.md
+  - Archive Handling: archive.md

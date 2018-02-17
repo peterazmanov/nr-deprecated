@@ -1,4 +1,6 @@
-# Copyright (C) 2016  Niklas Rosenstein
+# The MIT License (MIT)
+#
+# Copyright (c) 2018 Niklas Rosenstein
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -7,16 +9,16 @@
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 """
 Parser and matcher for patterns in a `.gitignore` file.
 
@@ -38,6 +40,7 @@ import re as _re
 MATCH_IGNORE = 'ignore'   #: Ignore the file.
 MATCH_INCLUDE = 'include' #: Include the file.
 MATCH_DEFAULT = 'default' #: Default to include, but something else may override this.
+
 
 class Pattern(object):
   """
@@ -89,6 +92,7 @@ class Pattern(object):
         if not fnmatch(fpart, patpart):
           return False
     return True
+
 
 class IgnoreList(object):
   """
@@ -174,6 +178,7 @@ class IgnoreList(object):
     else:
       return MATCH_DEFAULT
 
+
 class IgnoreListCollection(list):
   """
   Represents a collection of #IgnoreList#s. Used to combine `.gitignore` files
@@ -203,6 +208,7 @@ class IgnoreListCollection(list):
       if result != MATCH_DEFAULT:
         return result
     return MATCH_DEFAULT
+
 
 def parse(ignore_file='.gitignore', git_dir='.git', additional_files=(),
           global_=True, root_dir=None, defaults=True):
@@ -244,6 +250,7 @@ def parse(ignore_file='.gitignore', git_dir='.git', additional_files=(),
     result.append(get_defaults(root_dir))
   return result
 
+
 def get_defaults(root):
   """
   Returns a default #IgnoreList which excludes common SCM files and directories.
@@ -257,6 +264,7 @@ def get_defaults(root):
     '/.hg'
   ])
   return defaults
+
 
 def walk(patterns, dirname):
   """
