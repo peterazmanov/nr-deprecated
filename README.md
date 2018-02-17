@@ -20,7 +20,18 @@ currently not automatically installed when install `nr`.
 * `nr.py.meta` &ndash; Python metaclasses
 * `nr.recordclass` &ndash; Mutable namedtuples with support for default args
 * `nr.strex` &ndash; String scanning and lexing facilities
+* `nr.tools` &ndash; This package contains only command-line utilities
 * `nr.version` &ndash; Semantic version parser and evaluator
+
+### Command-line
+
+* `nr archive` &ndash; Command-line of the `nr.archive` module
+* `nr grablicense` &ndash; Print text for the specified license, optionally
+    formatted properly for the specified language's comment syntax.
+* `nr jiratime` &ndash; Sum up work times for a user in JIRA.
+* `nr py.blob` &ndash; Create a base64 encoded blob from Python source code
+* `nr versionupgrade` &ndash; Upgrade version numbers in your project and
+    add a Git commit.
 
 ### Testing
 

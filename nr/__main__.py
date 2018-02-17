@@ -23,9 +23,10 @@
 import argparse
 import sys
 
-commands = ['archive', 'grablicense', 'py.blob', 'versionupgrade']
+commands = ['archive', 'grablicense', 'jiratime', 'py.blob', 'versionupgrade']
 command_map = {
-  'grablicense': 'tools.grablicense'
+  'grablicense': 'tools.grablicense',
+  'jiratime': 'tools.jiratime'
 }
 
 def main(prog=None, argv=None):
