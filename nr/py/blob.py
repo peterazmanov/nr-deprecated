@@ -28,6 +28,7 @@ to be installed.
 import argparse
 import base64
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -43,7 +44,7 @@ import base64 as b, types as t, zlib as z; m=t.ModuleType({name!r});
 m.__file__ = __file__; blob={blobdata}
 exec({decode}, vars(m)); {storemethod}
 del blob, b, t, z, m;
-'''
+'''.strip()
 
 STOREMETHOD_SYMBOL = '_{name}=m;{symbol}=getattr(m,"{symbol}")'
 STOREMETHOD_DIRECT = '{name}=m'
@@ -95,7 +96,7 @@ def mkblob(name, code, compress=False, minify=False, minify_obfuscate=False,
     decode = DECODE_NONE
   if compress or blob:
     data = base64.b64encode(data).decode('ascii')
-    lines = "b'\\\n" + '\\\n'.join(textwrap.wrap(data, width=line_width)) + "'"
+    lines = "b'\\\n" + '\\\n'.join(textwrap.wrap(data, width=line_width-2)) + "'"
   else:
     lines = '"""' + data.decode('utf8') + '"""'
 
@@ -124,11 +125,32 @@ def main(prog=None, argv=None):
   parser.add_argument('-e', '--export-symbol')
   args = parser.parse_args(argv)
 
+  code = args.sourcefile.read()
   name = os.path.splitext(os.path.basename(args.sourcefile.name))[0]
-  args.output.write(mkblob(name=name, code=args.sourcefile.read(),
-      minify=args.minify, compress=args.compress,
-      minify_obfuscate=args.minify_obfuscate, line_width=args.line_width,
-      export_symbol=args.export_symbol))
+  version = re.search('^__version__\\s*=\\s*(?:\'|\")(.*?)(?:\'|\")', code, re.M)
+  if version:
+    name += '-v' + version.group(1)
+  flags = ''
+  if args.compress:
+    flags = 'c' + flags
+  if args.minify_obfuscate:
+    flags = 'O' + flags
+  if args.minify:
+    flags = 'm' + flags
+  flags += 'w' + str(args.line_width)
+  name += '-blob-' + flags
+  args.output.write('# {}\n'.format(name))
+
+  name = os.path.splitext(os.path.basename(args.sourcefile.name))[0]
+  args.output.write(mkblob(
+    name=name,
+    code=code,
+    minify=args.minify,
+    compress=args.compress,
+    minify_obfuscate=args.minify_obfuscate,
+    line_width=args.line_width,
+    export_symbol=args.export_symbol))
+  args.output.write('\n')
 
 
 if __name__ == "__main__":
