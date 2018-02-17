@@ -265,16 +265,16 @@ register_opener('.tar.bz2', partial(_tar_opener, _tar_mode='bz2'))
 register_opener('.tar.xz', partial(_tar_opener, _tar_mode='xz'))
 
 
-def main():
+def main(prog=None, argv=None):
   import argparse
-  parser = argparse.ArgumentParser()
+  parser = argparse.ArgumentParser(prog=prog)
   parser.add_argument('filename', help='Name of the archive.')
   parser.add_argument('-e', '--extract', help='Extract the archive to the '
     'specified directory.')
   parser.add_argument('-s', '--single-unpack', action='store_true',
     help='Skip over the top directory in the archive if it is the only '
       'member in the archive root directory.')
-  args = parser.parse_args()
+  args = parser.parse_args(argv)
 
   if args.extract:
     extract(args.filename, args.extract, unpack_single_dir=args.single_unpack)

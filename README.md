@@ -4,6 +4,10 @@ This library contains a variety of Python programming utilities that didn't
 make it into separate modules. Additionally, this library comes with a bunch
 of command-line tools.
 
+Note that most components can be used independently from each other, and some
+components may need additional dependencies. These additional dependencies are
+currently not automatically installed when install `nr`.
+
 ### Components
 
 * `nr.archive` &ndash; Archive handling abstraction

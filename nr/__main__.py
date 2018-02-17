@@ -20,39 +20,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
+import argparse
 import sys
-from setuptools import setup, find_packages
 
-def readme():
-  if os.path.isfile('README.md') and any('dist' in x for x in sys.argv[1:]):
-    if os.system('pandoc -s README.md -o README.rst') != 0:
-      print('-----------------------------------------------------------------')
-      print('WARNING: README.rst could not be generated, pandoc command failed')
-      print('-----------------------------------------------------------------')
-      if sys.stdout.isatty():
-        input("Enter to continue... ")
-    else:
-      print("Generated README.rst with Pandoc")
+commands = ['archive', 'versionupgrade']
 
-  if os.path.isfile('README.rst'):
-    with open('README.rst') as fp:
-      return fp.read()
-  return ''
+def main(prog=None, argv=None):
+  parser = argparse.ArgumentParser(prog=prog)
+  parser.add_argument('command', choices=commands, nargs='?')
+  parser.add_argument('argv', nargs='...')
+  args = parser.parse_args(argv)
+  if not args.command:
+    parser.print_usage()
+    sys.exit(0)
+  module = getattr(__import__('nr.' + args.command), args.command)
+  sys.exit(module.main(parser.prog + ' ' + args.command, args.argv))
 
-setup(
-  name='nr',
-  version='2.0.0-dev',
-  license='MIT',
-  description='Compound utility library and command-line tools for Python 2/3',
-  long_description=readme(),
-  url='https://github.com/NiklasRosenstein/py-nr',
-  author='Niklas Rosenstein',
-  author_email='rosensteinniklas@gmail.com',
-  packages=find_packages(),
-  entry_points = {
-    'console_scripts': [
-      'nr = nr.__main__:main'
-    ]
-  }
-)
+if __name__ == '__main__':
+  sys.exit(main())
