@@ -1,6 +1,6 @@
 
 from nose.tools import *
-from nr.parse import strex
+from nr import strex
 
 def test_seek():
   s = strex.Scanner("foo\nbar")

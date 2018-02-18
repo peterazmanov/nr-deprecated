@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 from nose.tools import *
-from nr.types.version import Version, VersionCriteria
+from nr.version import Version, VersionCriteria
 
 def test_version():
   assert Version('1').parts == [1, 0, 0]

@@ -86,7 +86,7 @@ class InlineMetaclass(type):
       return super(InlineMetaclass, cls).__new__(cls, name, bases, dict)
     else:
       if isinstance(metanew, staticmethod):
-        metanew = pycompat.get_staticmethod_func(metanew)
+        metanew = get_staticmethod_func(metanew)
       return metanew(cls, name, bases, dict)
 
   def __init__(self, name, bases, dict):
