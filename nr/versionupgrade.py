@@ -142,14 +142,18 @@ class ExitCodeError(Exception):
   pass
 
 
-def exit(*message, code=0):
+def exit(*message, **kwargs):
+  code = kwargs.pop('code', 0)
+  for key in kwargs:
+    raise TypeError('unexpected keyword argument:', key)
   if message:
     print_err(*message)
   sys.exit(code)
 
 
-def print_err(*obj, sep=' ', end='\n'):
-  print(*obj, sep=sep, end=end, file=sys.stderr)
+def print_err(*obj, **kwargs):
+  kwargs['file'] = sys.stderr
+  print(*obj, **kwargs)
 
 
 def main(prog=None, argv=None):
