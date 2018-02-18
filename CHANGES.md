@@ -9,6 +9,8 @@ __nr.version__
 * New semantic, a `.extension` indicates that it is higher than the
   version without the extension, a `-extension` indicates that it is lower.
 * Add `+extension` as synonym for `.extension`
+* Allow version number extensions without a separating character, behaving
+  like a `+extension` or `.extension`
 
 ### v1.4.10
 

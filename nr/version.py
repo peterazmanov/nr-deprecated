@@ -58,7 +58,7 @@ class Version(object):
       self.parts = value.parts[:]
       self.extension = value.extension
     elif isinstance(value, str):
-      match = re.match(r'^(\d+(\.\d+){0,2})([\+\-\.][A-z][\w\.\-]*)?$', value)
+      match = re.match(r'^(\d+(\.\d+){0,2})([\+\-\.]?[A-z][\w\.\-]*)?$', value)
       if not match:
         raise ValueError("invalid version string: {0!r}".format(value))
       parts = [int(x) for x in match.group(1).split('.')]
@@ -136,7 +136,8 @@ class Version(object):
   def norm_ext_prefix(self):
     if self.extension:
       if self.extension[0] in ('+', '.'): return '+'
-      else: return '-'
+      elif self.extension[0] == '-': return '-'
+      else: return '+'
     return ''
 
   @property

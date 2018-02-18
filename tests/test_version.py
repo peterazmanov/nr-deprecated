@@ -40,6 +40,9 @@ def test_version():
   assert Version(Version('1.0.9+alpha')) > Version('1.0.9-alpha')
   assert Version(Version('1.0.9')) < Version('1.0.9+alpha')
   assert Version(Version('1.0.9-alpha')) < Version('1.0.9+alpha')
+  assert Version(Version('1.0.9a')) > Version('1.0.9')
+  assert Version(Version('1.0.9a')) == Version('1.0.9+a')
+  assert str(Version('1.0.9a')) == '1.0.9a'
 
 @raises(ValueError)
 def test_version_invalid1():
