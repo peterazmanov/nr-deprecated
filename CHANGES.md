@@ -4,6 +4,12 @@
 * Removed `nr.misc.cli` module
 * Removed `nr.types.singleton` module
 
+__nr.version__
+
+* New semantic, a `.extension` indicates that it is higher than the
+  version without the extension, a `-extension` indicates that it is lower.
+* Add `+extension` as synonym for `.extension`
+
 ### v1.4.10
 
 __nr.parse.strex__

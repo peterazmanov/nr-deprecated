@@ -34,6 +34,12 @@ def test_version():
   assert not Version('1.0.1') < Version('1.0')
   assert not Version('1.32.0') <= Version('1.9.2')
   assert Version(Version('1.0.9.alpha')) == Version('1.0.9.alpha')
+  assert Version(Version('1.0.9+alpha')) == Version('1.0.9.alpha')
+  assert Version(Version('1.0.9+alpha')) != Version('1.0.9-alpha')
+  assert Version(Version('1.0.9+alpha')) > Version('1.0.9')
+  assert Version(Version('1.0.9+alpha')) > Version('1.0.9-alpha')
+  assert Version(Version('1.0.9')) < Version('1.0.9+alpha')
+  assert Version(Version('1.0.9-alpha')) < Version('1.0.9+alpha')
 
 @raises(ValueError)
 def test_version_invalid1():
@@ -45,9 +51,11 @@ def test_version_cmp():
   assert Version('1.1') > Version('1.0.0')
   assert Version('1.0.0') < Version('1.0.1')
   assert Version('1') <= Version('1.0.0')
-  assert Version('1.0.alpha') < Version('1')
-  assert Version('1.0.alpha') < Version('1.0.0')
-  assert Version('1.0.0') > Version('1.0.alpha')
+  assert Version('1.0-alpha') < Version('1')
+  assert Version('1.0-alpha') < Version('1.0.0')
+  assert Version('1.0.alpha') > Version('1.0.0')
+  assert Version('1.0+alpha') > Version('1')
+  assert Version('1.0.0') > Version('1.0-alpha')
 
 def test_version_satisfies():
   assert not Version('1.2.3').satisfies('=1.0')
@@ -95,6 +103,7 @@ def test_critera():
   assert VersionCriteria("x.6.x")(Version('1.6.9'))
   assert not VersionCriteria("x.6.x")(Version('1.7.9'))
 
-@raises(AssertionError)
 def test_critera_invalid1():
-  assert VersionCriteria('~ 1.0')(Version('1.0.0.rc1'))
+  assert_true(VersionCriteria('~ 1.0')(Version('1.0.0.rc1')))
+  assert_true(VersionCriteria('~ 1.0')(Version('1.0.0+rc1')))
+  assert_false(VersionCriteria('~ 1.0')(Version('1.0.0-alpha')))

@@ -37,15 +37,20 @@ class Version(object):
   are compared case-insensitive. A version number without extension is
   always greater than the respective version number with extension.
 
-  The EXTENSION part must start with a `-` or `.` character and
+  The EXTENSION part must start with a `+`, `-` or `.` character and
   be followed by an alphanumeric letter. Then any number of the former
   plus digits may follow.
+
+  If the extension is preceeded by a `+` or `.`, the version is considered
+  higher than a version without the extension, otherwise it is considered
+  lower.
 
   # Attributes
   major (int):
   minor(int):
   path (int):
-  extension (str):
+  extension (str, None): The extension, must be followed by one of
+      the characters `+`, `.` or `-`.
   """
 
   def __init__(self, value):
@@ -53,14 +58,13 @@ class Version(object):
       self.parts = value.parts[:]
       self.extension = value.extension
     elif isinstance(value, str):
-      match = re.match(r'^(\d+(\.\d+){0,2})([\-\.][A-z][\w\.\-]*)?$', value)
+      match = re.match(r'^(\d+(\.\d+){0,2})([\+\-\.][A-z][\w\.\-]*)?$', value)
       if not match:
         raise ValueError("invalid version string: {0!r}".format(value))
       parts = [int(x) for x in match.group(1).split('.')]
       parts.extend(0 for __ in range(3 - len(parts)))
-      extension = match.group(3)
       self.parts = parts
-      self.extension = extension or ''
+      self.extension = match.group(3) or ''
     else:
       raise TypeError("unexpected type: {0!r}".format(type(value)))
 
@@ -77,22 +81,21 @@ class Version(object):
           return True
         elif a > b:
           return False
-      # Now self can only be smaller if the parts are equal
-      # and the extension is smaller than the extension of other.
-      if self.parts == other.parts:
-        if self.extension:
-          if other.extension:
-            return self.extension < other.extension
-          else:
-            return True
-      return False
+      assert self.parts == other.parts
+      return ({'': 0, '-': -1, '+': 1}[self.norm_ext_prefix], self.norm_ext) <\
+        ({'': 0, '-': -1, '+': 1}[other.norm_ext_prefix], other.norm_ext)
     else:
       return NotImplemented
 
   def __eq__(self, other):
     if isinstance(other, Version):
-      return self.parts == other.parts and self.extension.lower() \
-        == other.extension.lower()
+      if self.parts != other.parts:
+        return False
+      if self.norm_ext_prefix != other.norm_ext_prefix:
+        return False
+      if self.norm_ext.lower() != other.norm_ext.lower():
+        return False
+      return True
     else:
       return NotImplemented
 
@@ -128,6 +131,19 @@ class Version(object):
   @patch.setter
   def patch(self, value):
     self.parts[2] = value
+
+  @property
+  def norm_ext_prefix(self):
+    if self.extension:
+      if self.extension[0] in ('+', '.'): return '+'
+      else: return '-'
+    return ''
+
+  @property
+  def norm_ext(self):
+    if self.extension:
+      if self.extension[0] in ('+', '.', '-'): return self.extension[1:]
+    return self.extension
 
   def satisfies(self, criteria):
     if isinstance(criteria, str):
