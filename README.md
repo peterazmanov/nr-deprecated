@@ -20,6 +20,7 @@ currently not automatically installed when install `nr`.
 * `nr.py.meta` &ndash; Python metaclasses
 * `nr.recordclass` &ndash; Mutable namedtuples with support for default args
 * `nr.strex` &ndash; String scanning and lexing facilities
+* `nr.tempfile` &ndash; A better temporary file and directory context manager
 * `nr.tools` &ndash; This package contains only command-line utilities
 * `nr.version` &ndash; Semantic version parser and evaluator
 
