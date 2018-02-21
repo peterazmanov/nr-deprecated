@@ -1,5 +1,4 @@
 # https://github.com/NiklasRosenstein/versionupgrade
 tag v{VERSION}
-upgrade setup.py:  version = '{VERSION}'
+upgrade setup.py:  version='{VERSION}'
 upgrade nr/__init__.py:__version__ = '{VERSION}'
-upgrade README.md:\*Current Version: v{VERSION}\*
