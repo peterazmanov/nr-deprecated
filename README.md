@@ -11,7 +11,11 @@ currently not automatically installed when install `nr`.
 ### Components
 
 * `nr.archive` &ndash; Archive handling abstraction
+* `nr.c4d` &ndash; Cinema 4D utility library.
 * `nr.concurrency` &ndash; Job scheduling and threaded event processing
+* `nr.datastructures` &ndash; Some data structures, similar to `collections`.
+  Currently contains only an `OrderedDict` class (imported from `collections`
+  if available)
 * `nr.enum` &ndash; Python 2/3 compatible enumeration class
 * `nr.gitignore` &ndash; Parser and evaluator for `.gitignore` files
 * `nr.py.blob` &ndash; Convert Python source code into a base64 encoded blob
@@ -28,11 +32,11 @@ currently not automatically installed when install `nr`.
 
 * `nr archive` &ndash; Command-line of the `nr.archive` module
 * `nr grablicense` &ndash; Print text for the specified license, optionally
-    formatted properly for the specified language's comment syntax.
+  formatted properly for the specified language's comment syntax.
 * `nr jiratime` &ndash; Sum up work times for a user in JIRA.
 * `nr py.blob` &ndash; Create a base64 encoded blob from Python source code
 * `nr versionupgrade` &ndash; Upgrade version numbers in your project and
-    add a Git commit.
+  add a Git commit.
 
 ### Testing
 
