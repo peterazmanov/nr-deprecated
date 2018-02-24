@@ -11,7 +11,6 @@ currently not automatically installed when install `nr`.
 ### Components
 
 * `nr.archive` &ndash; Archive handling abstraction
-* `nr.c4d` &ndash; Cinema 4D utility library.
 * `nr.concurrency` &ndash; Job scheduling and threaded event processing
 * `nr.datastructures` &ndash; Some data structures, similar to `collections`.
   Currently contains only an `OrderedDict` class (imported from `collections`
