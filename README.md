@@ -16,6 +16,7 @@ currently not automatically installed when install `nr`.
   Currently contains only an `OrderedDict` class (imported from `collections`
   if available)
 * `nr.enum` &ndash; Python 2/3 compatible enumeration class
+* `nr.generic` &ndash; Python generic metaclass (type arguments)
 * `nr.gitignore` &ndash; Parser and evaluator for `.gitignore` files
 * `nr.py.blob` &ndash; Convert Python source code into a base64 encoded blob
 * `nr.py.bytecode` &ndash; Helpers for working with Python bytecode
