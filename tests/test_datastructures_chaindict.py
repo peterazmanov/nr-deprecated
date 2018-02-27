@@ -27,7 +27,7 @@ def test_chaindict():
   a = {'foo': 42}
   b = {'bar': 'spam'}
   c = {}
-  d = ChainDict(a, b, c)
+  d = ChainDict({}, a, b, c)
 
   assert_equals(str(d), 'ChainDict({})'.format({'foo': 42, 'bar': 'spam'}))
   assert_equals(d['foo'], a['foo'])

@@ -27,13 +27,14 @@ class ChainDict(object):
   """
   A dictionary that wraps a list of dictionaries. The dictionaries passed
   into the #ChainDict will not be mutated. Setting and deleting values will
-  happen on a separate internal dictionary.
+  happen on the first dictionary passed.
   """
 
   def __init__(self, *dicts):
-    self._major = {}
+    if not dicts:
+      raise ValueError('need at least one argument')
+    self._major = dicts[0]
     self._dicts = list(dicts)
-    self._dicts.insert(0, self._major)
     self._deleted = set()
 
   def __contains__(self, key):
