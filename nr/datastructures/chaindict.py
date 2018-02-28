@@ -36,6 +36,7 @@ class ChainDict(object):
     self._major = dicts[0]
     self._dicts = list(dicts)
     self._deleted = set()
+    self._in_repr = False
 
   def __contains__(self, key):
     if key not in self._deleted:
@@ -68,7 +69,14 @@ class ChainDict(object):
     return stream.count(self.keys())
 
   def __repr__(self):
-    return 'ChainDict({})'.format(dict(compat.iteritems(self)))
+    if self._in_repr:
+      return 'ChainDict(...)'
+    else:
+      self._in_repr = True
+      try:
+        return 'ChainDict({})'.format(dict(compat.iteritems(self)))
+      finally:
+        self._in_repr = False
 
   def __eq__(self, other):
     return dict(self.items()) == other

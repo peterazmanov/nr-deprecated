@@ -11,18 +11,24 @@ currently not automatically installed when install `nr`.
 ### Components
 
 * `nr.archive` &ndash; Archive handling abstraction
+* `nr.compat` &ndash; Simple Python 2/3 compatibility layer
 * `nr.concurrency` &ndash; Job scheduling and threaded event processing
-* `nr.datastructures` &ndash; Some data structures, similar to `collections`.
-  Currently contains only an `OrderedDict` class (imported from `collections`
-  if available)
+* `nr.datastructures` &ndash; Some data structures, including an `OrderedDict`
+  for Python 2.6 (`from nr.datastructures.ordereddict import OrderedDict`)
+* `nr.decorators` &ndash; Some Python function decorators
 * `nr.enum` &ndash; Python 2/3 compatible enumeration class
 * `nr.generic` &ndash; Python generic metaclass (type arguments)
 * `nr.gitignore` &ndash; Parser and evaluator for `.gitignore` files
+* `nr.named` &ndash; Mutable namedtuples declarables as classes using
+  `__annotations__` or the Python3.6+ class-level annotations syntax
+* `nr.path` &ndash; Alternative interface to `os.path` and some additional
+  functions (requires `glob2` if you want to use the `nr.path.glob()` function)
 * `nr.py.blob` &ndash; Convert Python source code into a base64 encoded blob
 * `nr.py.bytecode` &ndash; Helpers for working with Python bytecode
 * `nr.py.context` &ndash; Python context manager tools
 * `nr.py.meta` &ndash; Python metaclasses
 * `nr.recordclass` &ndash; Mutable namedtuples with support for default args
+* `nr.stream` &ndash; Provides a class for chained stream processing
 * `nr.strex` &ndash; String scanning and lexing facilities
 * `nr.tempfile` &ndash; A better temporary file and directory context manager
 * `nr.tools` &ndash; This package contains only command-line utilities

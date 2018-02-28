@@ -26,7 +26,8 @@ import sys
 commands = ['archive', 'grablicense', 'jiratime', 'py.blob', 'versionupgrade']
 command_map = {
   'grablicense': 'tools.grablicense',
-  'jiratime': 'tools.jiratime'
+  'jiratime': 'tools.jiratime',
+  'versionupgrade': 'tools.versionupgrade'
 }
 
 def main(prog=None, argv=None):
