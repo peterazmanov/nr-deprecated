@@ -23,6 +23,7 @@
 from __future__ import print_function
 import argparse
 import datetime
+import io
 import os
 import sys
 
@@ -51,19 +52,19 @@ def main(prog=None, argv=None):
     return 1
 
   if args.list:
-    for name in (x.name for x in LICENSES_DIR.iterdir()):
+    for name in os.path.listdir(LICENSES_DIR):
       print(name)
     return
 
-  directory = LICENSES_DIR.joinpath(args.license)
-  if not directory.is_dir():
+  directory = os.path.join(LICENSES_DIR, args.license)
+  if not os.path.isdir(directory):
     print('fatal: unsupported license: "{}"'.format(args.license), file=sys.stderr)
     return 1
 
   filename = 'LICENSE_SHORT.txt' if args.short else 'LICENSE.txt'
-  filename = directory.joinpath(filename)
-  if args.short and not filename.is_file():
-    filename = directory.joinpath('LICENSE.txt')
+  filename = os.path.join(directory, filename)
+  if args.short and not os.path.isfile(filename):
+    filename = os.path.join(directory, 'LICENSE.txt')
 
   if args.python:
     prefix = (None, '# ', '# ', None)
@@ -76,7 +77,7 @@ def main(prog=None, argv=None):
 
   year = str(datetime.date.today().year)
 
-  with filename.open() as fp:
+  with io.open(filename, 'r') as fp:
     if prefix[0]:
       print(prefix[0])
     for index, line in enumerate(fp):
