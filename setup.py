@@ -42,7 +42,7 @@ def readme():
 
 setup(
   name='nr',
-  version='2.0.0',
+  version='2.0.1',
   license='MIT',
   description='Compound utility library and command-line tools for Python 2/3',
   long_description=readme(),
