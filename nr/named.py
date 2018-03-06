@@ -114,4 +114,4 @@ class named_initializer:
     self.func = func
 
 
-initializer = named
+initializer = named_initializer
