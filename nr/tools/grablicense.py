@@ -45,6 +45,7 @@ def main(prog=None, argv=None):
   parser.add_argument('--java', action='store_true', help='Format for Java code.')
   parser.add_argument('--cpp', action='store_true', help='Format for C++ code.')
   parser.add_argument('--c', action='store_true', help='Format for C code.')
+  parser.add_argument('--badge', action='store_true', help='Output Markdown code for a badge for the specified license.')
   args = parser.parse_args(argv)
 
   if not args.license and not args.list:
@@ -60,6 +61,11 @@ def main(prog=None, argv=None):
   if not os.path.isdir(directory):
     print('fatal: unsupported license: "{}"'.format(args.license), file=sys.stderr)
     return 1
+
+  if args.badge:
+    with open(os.path.join(directory, 'BADGE.md')) as fp:
+      print(fp.read())
+    return 0
 
   filename = 'LICENSE_SHORT.txt' if args.short else 'LICENSE.txt'
   filename = os.path.join(directory, filename)
