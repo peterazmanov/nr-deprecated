@@ -25,15 +25,18 @@ import os
 import setuptools
 import sys
 
-if any('dist' in x for x in sys.argv[1:]):
-  import setuptools_readme
-  setuptools_readme.convert('README.md', encoding='utf8')
-if os.path.isfile('README.rst'):
-  with open('README.rst') as fp:
-    long_description = fp.read()
-    del fp
-else:
-  long_description = ''
+
+if any('dist' in x for x in sys.argv[1:]) and os.path.isfile('README.md'):
+  try:
+    import setuptools_readme
+  except ImportError:
+    print('Warning: README.rst could not be generated, setuptools_readme module missing.')
+  else:
+    setuptools_readme.convert('README.md', encoding='utf8')
+
+with io.open('README.rst', encoding='utf8') as fp:
+  long_description = fp.read()
+
 
 setuptools.setup(
   name='nr',
