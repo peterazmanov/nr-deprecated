@@ -1,3 +1,18 @@
+### v2.0.2
+
+* add `nr grablicense --badge` option
+* add `nr.path.compare_timestamp()`
+
+### v2.0.1
+
+* fix `nr.named.initializer` alias
+* fix `nr grablicense` command, update MIT license width
+* move `nr.versionupgrade` to `nr.tools.versionupgrade`
+* update `nr.enum` to use metaclass helper in `nr.compat`
+* add `nr.compat`
+* add `nr.datastructures.ChainDict`
+* add `nr.generic`
+
 ### v2.0.0
 
 * Update module structure
