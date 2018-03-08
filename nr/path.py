@@ -322,3 +322,19 @@ def chmod(path, modstring):
   flags = chmod_update(os.stat(path).st_mode, modstring)
   os.chmod(path, flags)
 
+
+def compare_timestamp(src, dst):
+  """
+  Compares the timestamps of file *src* and *dst*, returning #True if the
+  *dst* is out of date or does not exist. Raises an #OSError if the *src*
+  file does not exist.
+  """
+
+  try:
+    dst_time = os.path.getmtime(dst)
+  except OSError as exc:
+    if exc.errno == errno.ENOENT:
+      return True  # dst does not exist
+
+  src_time = os.path.getmtime(src)
+  return src_time > dst_time
