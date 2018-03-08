@@ -24,6 +24,7 @@ This module provides an alternative interface to handling filesystem path and
 adds a lot of additional functionality.
 """
 
+import errno
 import os
 import stat
 
@@ -267,7 +268,12 @@ def makedirs(path, exist_ok=True):
   Like #os.makedirs(), with *exist_ok* defaulting to #True.
   """
 
-  os.makedirs(path, exist_ok=exist_ok)
+  try:
+    os.makedirs(path)
+  except OSError as exc:
+    if exist_ok and exc.errno == errno.EEXIST:
+      return
+    raise
 
 
 def chmod_update(flags, modstring):
