@@ -34,8 +34,12 @@ if any('dist' in x for x in sys.argv[1:]) and os.path.isfile('README.md'):
   else:
     setuptools_readme.convert('README.md', encoding='utf8')
 
-with io.open('README.rst', encoding='utf8') as fp:
-  long_description = fp.read()
+if os.path.isfile('README.rst'):
+  with io.open('README.rst', encoding='utf8') as fp:
+    long_description = fp.read()
+else:
+  print('Warning: README.rst not found, no long_description in setup.')
+  long_description = ''
 
 
 setuptools.setup(
