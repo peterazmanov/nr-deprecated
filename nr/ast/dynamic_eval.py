@@ -151,8 +151,14 @@ class NameRewriter(ast.NodeTransformer):
       [self.__visit_target(x) for x in node.elts]
 
   def __visit_suite(self, node):
-    self.__push_stack()
+    result = node
+    if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+      self.__add_variable(node.name)
+      if not self.__is_local(node.name):
+        assign = self.__get_subscript_assign(node.name)
+        result = [node, ast.copy_location(assign, node)]
 
+    self.__push_stack()
     if isinstance(node, (ast.FunctionDef, ast.Lambda)):  # Also used for ClassDef
       for arg in node.args.args + getattr(node.args, 'kwonlyargs', []):  # Python 2
         self.__add_variable(get_argname(arg))
@@ -163,14 +169,7 @@ class NameRewriter(ast.NodeTransformer):
 
     self.generic_visit(node)
     self.__pop_stack()
-
-    if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-      self.__add_variable(node.name)
-      if not self.__is_local(node.name):
-        assign = self.__get_subscript_assign(node.name)
-        node = [node, ast.copy_location(assign, node)]
-
-    return node
+    return result
 
   def __visit_comprehension(self, node):
     # In Python 3, comprehensions have their own scope.

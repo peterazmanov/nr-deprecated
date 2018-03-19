@@ -181,3 +181,21 @@ def test_shadowed_deletion():
 
   dynamic_exec(code, resolve, assign, delete)
   assert 'a' in scope
+
+
+def test_recursion():
+  code = textwrap.dedent('''
+    def main():
+      def rec(n):
+        if n > 0:
+          rec(n-1)
+      rec(5)
+    main()
+
+    def rec(n):
+      if n > 0:
+        rec(n-1)
+    rec(5)
+  ''')
+
+  dynamic_exec(code, {})
