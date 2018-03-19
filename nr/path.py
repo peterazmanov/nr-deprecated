@@ -63,13 +63,13 @@ def canonical(path, parent=None):
   return norm(abs(path, parent))
 
 
-def abs(path: str, parent: str = None) -> str:
+def abs(path, parent=None):
   if not isabs(path):
     return join(parent or cwd(), path)
   return path
 
 
-def rel(path: str, parent: str = None, par: bool = False) -> str:
+def rel(path, parent=None, par=False):
   """
   Takes *path* and computes the relative path from *parent*. If *parent* is
   omitted, the current working directory is used.
@@ -92,11 +92,11 @@ def rel(path: str, parent: str = None, par: bool = False) -> str:
     return res
 
 
-def isrel(path: str) -> bool:
+def isrel(path):
   return not isabs(path)
 
 
-def issub(path: str) -> bool:
+def issub(path):
   """
   Returns #True if *path* is a relative path that does not point outside
   of its parent directory or is equal to its parent directory (thus, this
