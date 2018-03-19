@@ -87,5 +87,5 @@ else:
   def can_itervalues(d):
     return hasattr(d, 'valyes')
 
-  exec_ = exec
+  exec_ = getattr(builtins, 'exec')
   range = range
