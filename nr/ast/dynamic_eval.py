@@ -169,11 +169,16 @@ class NameRewriter(ast.NodeTransformer):
       return node
 
   def __visit_comprehension(self, node):
-    self.__push_stack()
+    # In Python 3, comprehensions have their own scope.
+    has_own_scope = (sys.version_info[0] > 2)
+
+    if has_own_scope:
+      self.__push_stack()
     for comp in node.generators:
       self.__visit_target(comp.target)
     self.generic_visit(node)
-    self.__pop_stack()
+    if has_own_scope:
+      self.__pop_stack()
     return node
 
   def visit_Name(self, node):
@@ -302,13 +307,13 @@ def dynamic_exec(code, resolve, assign=None, delete=None, automatic_builtins=Tru
           pass  # Continue with resolve()
       try:
         return resolve(key)
-      except NameError:
+      except NameError as exc:
         if automatic_builtins:
           try:
             return getattr(builtins, key)
           except AttributeError:
             pass
-        raise
+        raise exc
     def __setitem__(self, key, value):
       self._deleted.discard(key)
       if assign is None:

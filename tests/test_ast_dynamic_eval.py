@@ -40,9 +40,11 @@ def test_dynamic_exec():
   delete = assignments.__delitem__
 
   code = textwrap.dedent('''
+    from __future__ import print_function
     from nose.tools import *
     import os
     import os.path
+    import sys
     a, b = 0, 0
     def main(param1):
       global a
@@ -52,6 +54,10 @@ def test_dynamic_exec():
         a = 9999
         b = 9999
       alocal = 'ham'
+      tbd = 'delete me!'
+      del tbd
+      with assert_raises(NameError):
+        tbd
       print("Hello, World from", os.getcwd(), 'a, b', (a, b))
       assert_equals(a, 42)
       assert_equals(b, 99)
@@ -66,11 +72,11 @@ def test_dynamic_exec():
       Test()
       assert_equals((lambda x: x)(42), 42)
       [x for x in range(10)]
-      with assert_raises(NameError):
+      if sys.version_info[0] == 3:
+        with assert_raises(NameError):
+          x
+      else:
         x
-      del alocal
-      with assert_raises(NameError):
-        alocal
       class ContextManager(object):
         def __enter__(self):
           return 'ContextManager!'
