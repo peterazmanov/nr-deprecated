@@ -26,13 +26,14 @@ from nr.version import Version
 import argparse
 import collections
 import copy
+import datetime
 import operator
 import os
 import re
 import subprocess
 import sys
 
-Config = collections.namedtuple('Config', 'tag branch message upgrades')
+Config = collections.namedtuple('Config', 'tag branch message upgrades subs')
 Match = collections.namedtuple('Match', 'filename lines line_index version span')
 
 
@@ -45,6 +46,7 @@ def parse_config(filename):
       message Prepare {VERSION} release
       upgrade setup.py:  version = '{VERSION}'
       upgrade __init__.py:__version__ = '{VERSION}'
+      sub docs/changelog/v{VERSION}.md:# v{VERSION} (unreleased):# v{VERSION} ({DATE})
 
   Available commands:
 
@@ -55,6 +57,8 @@ def parse_config(filename):
                The same file may be listed multiple times. The pattern may
                actually be a regular expression and will be searched in
                every line of the file.
+    - sub: Specify a file where the part of the file matching the first string
+           will be replaced by the second string.
 
   Returns a #Config object.
   """
@@ -63,6 +67,7 @@ def parse_config(filename):
   branch = None
   message = 'Prepare {VERSION} release.'
   upgrades = {}
+  subs = {}
 
   with open(filename) as fp:
     for i, line in enumerate(fp):
@@ -85,10 +90,16 @@ def parse_config(filename):
           raise ValueError('invalid upgrade argument at line {}'.format(i+1))
         upgrade = upgrades.setdefault(filename, [])
         upgrade.append(pattern)
+      elif key == 'sub':
+        filename, sep, pattern = value.partition(':')
+        pattern = pattern.partition(':')[::2]
+        if not pattern[0] or not pattern[1]:
+          raise ValueError('invalid sub argument at line {}'.format(i+1))
+        subs.setdefault(filename, []).append(pattern)
       else:
         raise ValueError('invalid command {!r} at line {}'.format(key, i+1))
 
-  return Config(tag, branch, message, upgrades)
+  return Config(tag, branch, message, upgrades, subs)
 
 
 def match_version_pattern(filename, pattern):
@@ -112,7 +123,7 @@ def match_version_pattern(filename, pattern):
   return None
 
 
-def get_changed_files():
+def get_changed_files(include_staged=False):
   """
   Returns a list of the files that changed in the Git repository. This is
   used to check if the files that are supposed to be upgraded have changed.
@@ -128,6 +139,7 @@ def get_changed_files():
   for line in stdout.decode().split('\n'):
     if not line or line.startswith('#'): continue
     assert line[2] == ' '
+    if not include_staged and line[1] == ' ': continue
     files.append(line[3:])
   return files
 
@@ -160,6 +172,7 @@ def main(prog=None, argv=None):
   """)
   parser.add_argument('version', type=Version)
   parser.add_argument('--dry', action='store_true')
+  parser.add_argument('--no-commit', action='store_true')
   args = parser.parse_args(argv)
 
   filename = '.config/versionupgrade'
@@ -180,8 +193,8 @@ def main(prog=None, argv=None):
   if not args.dry:
     changed_files = list(filter(lambda x: x in config.upgrades, get_changed_files()))
     if changed_files:
-      print("fatal: please commit changes to the following files before "
-          "using `versionupgrade`")
+      print("fatal: please commit or stage changes to the following files "
+            "before using `versionupgrade`")
       for filename in changed_files:
         print("  {0}".format(filename))
       return 1
@@ -216,6 +229,13 @@ def main(prog=None, argv=None):
           print_err("  {0!r} with version {1!r}".format(match.filename, match.version))
         exit(code=1)
 
+  def subvars(x):
+    x = x.replace('{VERSION}', str(args.version))
+    x = x.replace('{DATE}', datetime.date.today().strftime('%Y-%m-%d'))
+    return x
+
+  changed_files = []
+
   # Make sure the new version number is newer than the current one.
   current_version = version_matches[0].version
   if args.version < current_version:
@@ -231,6 +251,9 @@ def main(prog=None, argv=None):
     if not args.dry:
       # Update version number in files.
       for filename, matches in per_file_matches.items():
+        filename = subvars(filename)
+        changed_files.append(filename)
+
         lines = matches[0].lines
         for match in matches:
           # Replace the version number in the line.
@@ -247,26 +270,40 @@ def main(prog=None, argv=None):
             if index != (len(lines) - 1):
               fp.write('\n')
 
-  if args.dry:
-    print('note: dry run, not updating files')
+  # Apply substitutions.
+  for filename, patterns in config.subs.items():
+    filename = subvars(filename)
+    changed_files.append(filename)
+
+    with open(filename, 'r') as fp:
+      text = fp.read()
+    for pattern in patterns:
+      pattern = subvars(pattern[0]), subvars(pattern[1])
+      if pattern[0] not in text:
+        exit('fatal: "{}" not found in file "{}"'.format(pattern[0], filename))
+      text = text.replace(pattern[0], pattern[1])
+    if not args.dry:
+      with open(filename, 'w') as fp:
+        fp.write(text)
+
+  if args.dry or args.no_commit:
     return 0
 
   # Commit the files and create a Git tag.
-  msg = config.message.replace('{VERSION}', str(args.version))
+  msg = subvars(config.message)
   if files_changed:
-    files = list(config.upgrades.keys())
-    if subprocess.call(['git', 'commit', '-m', msg] + files) != 0:
+    if subprocess.call(['git', 'commit', '-m', msg] + changed_files) != 0:
       return 1
 
   # Create the tag and branch.
   ret = 0
   if config.tag:
-    tag_name = config.tag.replace('{VERSION}', str(args.version))
+    tag_name = subvars(config.tag)
     print('creating tag:', tag_name)
     if subprocess.call(['git', 'tag', tag_name]) != 0:
       ret = 1
   if config.branch:
-    branch_name = config.branch.replace('{VERSION}', str(args.version))
+    branch_name = subvars(config.branch)
     print('creating branch:', branch_name)
     if subprocess.call(['git', 'branch', branch_name, 'HEAD']) != 0:
       ret = 1
