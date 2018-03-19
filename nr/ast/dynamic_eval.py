@@ -319,7 +319,7 @@ def dynamic_exec(code, resolve, assign=None, delete=None, automatic_builtins=Tru
       try:
         return resolve(key)
       except NameError as exc:
-        if automatic_builtins:
+        if automatic_builtins and not key.startswith('_'):
           try:
             return getattr(builtins, key)
           except AttributeError:

@@ -207,3 +207,13 @@ def test_recursion():
   ''')
 
   dynamic_exec(code, {})
+
+
+def test_builtin_members():
+  code = textwrap.dedent('''
+    from nose.tools import *
+    with assert_raises(NameError):
+      __class__
+  ''')
+
+  dynamic_exec(code, {})
