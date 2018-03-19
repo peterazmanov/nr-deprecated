@@ -66,6 +66,10 @@ if PY2:
 
   range = xrange
 
+  string_types = (str, unicode)
+  text_type = unicode
+  binary_type = str
+
 else:
   import builtins
 
@@ -89,3 +93,7 @@ else:
 
   exec_ = getattr(builtins, 'exec')
   range = range
+
+  string_types = (str,)
+  text_type = str
+  binary_type = bytes

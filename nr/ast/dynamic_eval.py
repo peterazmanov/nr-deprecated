@@ -51,7 +51,18 @@ import ast
 import collections
 import textwrap
 import sys
-from ..compat import builtins, exec_
+from ..compat import builtins, exec_, string_types
+
+def get_argname(arg):
+  if isinstance(arg, ast.Name):
+    return arg.id
+  elif isinstance(arg, str):
+    return arg
+  elif isinstance(arg, ast.arg):
+    # Python 3 where annotations are supported
+    return arg.arg
+  else:
+    raise RuntimeError(ast.dump(arg))
 
 
 class NameRewriter(ast.NodeTransformer):
@@ -92,6 +103,7 @@ class NameRewriter(ast.NodeTransformer):
     return False
 
   def __add_variable(self, name):
+    assert isinstance(name, string_types), name
     if self.stack and name not in self.stack[-1]['external']:
       self.stack[-1]['vars'].add(name)
 
@@ -104,6 +116,7 @@ class NameRewriter(ast.NodeTransformer):
     Returns `<data_var>["<name>"]`
     """
 
+    assert isinstance(name, string_types), name
     return ast.Subscript(
       value=ast.Name(id=self.data_var, ctx=ast.Load()),
       slice=ast.Index(value=ast.Str(s=name)),
@@ -140,24 +153,13 @@ class NameRewriter(ast.NodeTransformer):
   def __visit_suite(self, node):
     self.__push_stack()
 
-    def argname(arg):
-      if isinstance(arg, ast.Name):
-        return arg.id
-      elif isinstance(arg, str):
-        return arg
-      elif isinstance(arg, ast.arg):
-        # Python 3 where annotations are supported
-        return arg.arg
-      else:
-        raise RuntimeError(ast.dump(arg))
-
     if isinstance(node, (ast.FunctionDef, ast.Lambda)):  # Also used for ClassDef
       for arg in node.args.args + getattr(node.args, 'kwonlyargs', []):  # Python 2
-        self.__add_variable(argname(arg))
+        self.__add_variable(get_argname(arg))
       if node.args.vararg:
-        self.__add_variable(argname(node.args.vararg))
+        self.__add_variable(get_argname(node.args.vararg))
       if node.args.kwarg:
-        self.__add_variable(argname(node.args.kwarg.arg))
+        self.__add_variable(get_argname(node.args.kwarg.arg))
 
     self.generic_visit(node)
     self.__pop_stack()
@@ -213,9 +215,11 @@ class NameRewriter(ast.NodeTransformer):
 
   def visit_ExceptHandler(self, node):
     if node.name:
-      self.__add_variable(node.name)
+      self.__add_variable(get_argname(node.name))  # Python 2 has an ast.Name here, Python 3 just a string
     self.generic_visit(node)
-    if not self.stack and node.name:
+    if not self.stack and node.name and sys.version_info[0] > 2:
+      # In Python 2, the node.name will already be replaced with a subscript
+      # by #visit_Name().
       node.body.insert(0, ast.copy_location(self.__get_subscript_assign(node.name), node))
       if sys.version_info[0] == 3:
         node.body.append(ast.copy_location(self.__get_subscript_delete(node.name), node))
