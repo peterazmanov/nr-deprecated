@@ -69,6 +69,8 @@ def test_dynamic_exec():
           c, b = queue.pop()
           assert_equals((c, b), ('ham', 'egg'))
           assert_equals(alocal, 'ham')
+      assert 'Test' not in assignments(), 'Test in assignments'
+      assert '__init__' not in assignments(), '__init__ in assignments'
       Test()
       assert_equals((lambda x: x)(42), 42)
       [x for x in range(10)]

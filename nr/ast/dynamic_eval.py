@@ -165,10 +165,12 @@ class NameRewriter(ast.NodeTransformer):
     self.__pop_stack()
 
     if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-      assign = self.__get_subscript_assign(node.name)
-      return [node, ast.copy_location(assign, node)]
-    else:
-      return node
+      self.__add_variable(node.name)
+      if not self.__is_local(node.name):
+        assign = self.__get_subscript_assign(node.name)
+        node = [node, ast.copy_location(assign, node)]
+
+    return node
 
   def __visit_comprehension(self, node):
     # In Python 3, comprehensions have their own scope.
@@ -232,6 +234,7 @@ class NameRewriter(ast.NodeTransformer):
       # Python 2
       optional_vars = [node.optional_vars]
     [self.__visit_target(x) for x in optional_vars if x]
+    self.generic_visit(node)
     return node
 
   visit_FunctionDef = __visit_suite
