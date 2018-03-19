@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import compat, stream
+from .. import compat
+from ..stream import stream
 
 
 class ChainDict(object):
