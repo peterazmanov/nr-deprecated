@@ -164,7 +164,7 @@ class NameRewriter(ast.NodeTransformer):
 
     if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
       assign = self.__get_subscript_assign(node.name)
-      return [node, assign]
+      return [node, ast.copy_location(assign, node)]
     else:
       return node
 
@@ -192,7 +192,7 @@ class NameRewriter(ast.NodeTransformer):
     for alias in node.names:
       name = (alias.asname or alias.name).split('.')[0]
       assignments.append(self.__get_subscript_assign(name))
-    return [node] + assignments
+    return [node] + [ast.copy_location(x, node) for x in assignments]
 
   def visit_ImportFrom(self, node):
     assignments = []
@@ -204,16 +204,16 @@ class NameRewriter(ast.NodeTransformer):
         assignments += module.body
       else:
         assignments.append(self.__get_subscript_assign(name))
-    return [node] + assignments
+    return [node] + [ast.copy_location(x, node) for x in assignments]
 
   def visit_ExceptHandler(self, node):
     if node.name:
       self.__add_variable(node.name)
     self.generic_visit(node)
     if not self.stack and node.name:
-      node.body.insert(0, self.__get_subscript_assign(node.name))
+      node.body.insert(0, ast.copy_location(self.__get_subscript_assign(node.name), node))
       if sys.version_info[0] == 3:
-        node.body.append(self.__get_subscript_delete(node.name))
+        node.body.append(ast.copy_location(self.__get_subscript_delete(node.name), node))
     return node
 
   def visit_With(self, node):
