@@ -145,6 +145,9 @@ class NameRewriter(ast.NodeTransformer):
 
   def visit_FunctionDef(self, node):
     self.__push_stack()
+    if isinstance(node, ast.FunctionDef):  # Also used for ClassDef
+      for arg in node.args.args + node.args.kwonlyargs:
+        self.__add_variable(arg.arg)
     self.generic_visit(node)
     self.__pop_stack()
     assign = self.__get_subscript_assign(node.name)
@@ -183,7 +186,8 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
   """
 
   parse_filename = filename or '<string>'
-  code = compile(transform(ast.parse(code, parse_filename)), parse_filename, _type)
+  ast_node = transform(ast.parse(code, parse_filename, mode=_type))
+  code = compile(ast_node, parse_filename, _type)
   if hasattr(resolve, '__getitem__'):
     if assign is not None:
       raise TypeError('"assign" parameter specified where "resolve" is a mapping')

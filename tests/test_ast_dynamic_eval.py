@@ -40,7 +40,7 @@ def test_dynamic_exec():
     from nose.tools import *
     import os
     a, b = 0, 0
-    def main():
+    def main(param1):
       global a
       a = 42
       b = 99
@@ -52,7 +52,7 @@ def test_dynamic_exec():
       assert_equals(b, 99)
       assert_equals(assignments()['a'], 42)
       assert_equals(assignments()['b'], 0)
-    main()
+    main('hello')
     assert_equals(a, 42)
     assert_equals(b, 0)
   ''')
