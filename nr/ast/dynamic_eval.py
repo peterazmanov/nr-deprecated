@@ -118,9 +118,13 @@ class NameRewriter(ast.NodeTransformer):
     return node
 
   def visit_Assign(self, node):
+    def visit(node):
+      if isinstance(node, ast.Name):
+        self.__add_variable(node.id)
+      elif isinstance(node, ast.Tuple):
+        [visit(x) for x in node.elts]
     for target in node.targets:
-      if isinstance(target, ast.Name):
-        self.__add_variable(target.id)
+      visit(target)
     self.generic_visit(node)
     return node
 
@@ -148,6 +152,10 @@ class NameRewriter(ast.NodeTransformer):
     if isinstance(node, ast.FunctionDef):  # Also used for ClassDef
       for arg in node.args.args + node.args.kwonlyargs:
         self.__add_variable(arg.arg)
+      if node.args.vararg:
+        self.__add_variable(node.args.vararg.arg)
+      if node.args.kwarg:
+        self.__add_variable(node.args.kwarg.arg)
     self.generic_visit(node)
     self.__pop_stack()
     assign = self.__get_subscript_assign(node.name)
