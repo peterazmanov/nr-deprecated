@@ -52,6 +52,12 @@ def test_dynamic_exec():
       assert_equals(b, 99)
       assert_equals(assignments()['a'], 42)
       assert_equals(assignments()['b'], 0)
+      class Test:
+        def __init__(self):
+          queue = [('ham', 'egg')]
+          c, b = queue.pop()
+          assert_equals((c, b), ('ham', 'egg'))
+      Test()
     main('hello')
     assert_equals(a, 42)
     assert_equals(b, 0)

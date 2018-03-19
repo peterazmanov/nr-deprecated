@@ -200,12 +200,20 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
         raise NameError(x)
 
     assign = input_mapping.__setitem__
+  else:
+    input_mapping = False
 
-  class Mapping(dict):
+  class DynamicMapping(object):
+    _data = {}
+    def __repr__(self):
+      if input_mapping:
+        return 'DynamicMapping({!r})'.format(input_mapping)
+      else:
+        return 'DynamicMapping(resolve={!r}, assign={!r})'.format(resolve, assign)
     def __getitem__(self, key):
       if assign is None:
         try:
-          return dict.__getitem__(self, key)
+          return self._data[key]
         except KeyError:
           pass  # Continue with resolve()
       try:
@@ -219,11 +227,16 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
         raise
     def __setitem__(self, key, value):
       if assign is None:
-        dict.__setitem__(self, key, value)
+        self._data[key] = value
       else:
         assign(key, value)
+    def get(self, key, default=None):
+      try:
+        return self[key]
+      except NameError:
+        return default
 
-  mapping = Mapping()
+  mapping = DynamicMapping()
   globals_ = {'__dict__': mapping}
 
   if filename:
