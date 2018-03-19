@@ -33,6 +33,8 @@ def with_metaclass(metaclass):
 
 
 if PY2:
+  import __builtin__ as builtins
+
   def iteritems(d):
     return d.iteritems()
 
@@ -51,7 +53,20 @@ if PY2:
   def can_itervalues(d):
     return hasattr(d, 'itervalues')
 
+  def exec_(code, globals=None, locals=None):
+    if globals is None:
+      frame = sys._getframe(1)
+      globals = frame.f_globals
+      if locals is None:
+        locals = frame.f_locals
+      del frame
+    elif locals is None:
+      locals = globals
+    exec("""exec code in globals, locals""")
+
 else:
+  import builtins
+
   def iteritems(d):
     return d.items()
 
@@ -69,3 +84,5 @@ else:
 
   def can_itervalues(d):
     return hasattr(d, 'valyes')
+
+  exec_ = exec
