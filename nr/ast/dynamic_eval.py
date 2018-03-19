@@ -83,7 +83,12 @@ class NameRewriter(ast.NodeTransformer):
   def __is_local(self, name):
     if not self.stack:
       return False
-    return name in self.stack[-1]['vars']
+    for frame in reversed(self.stack):
+      if name in frame['external']:
+        return False
+      if name in frame['vars']:
+        return True
+    return False
 
   def __add_variable(self, name):
     if self.stack and name not in self.stack[-1]['external']:
@@ -166,8 +171,6 @@ class NameRewriter(ast.NodeTransformer):
   def visit_Global(self, node):
     for name in node.names:
       self.__add_external(name)
-
-  visit_Nonlocal = visit_Global
 
 
 def transform(ast_node, data_var='__dict__'):

@@ -47,6 +47,7 @@ def test_dynamic_exec():
       class Foo:
         a = 9999
         b = 9999
+      alocal = 'ham'
       print("Hello, World from", os.getcwd(), 'a, b', (a, b))
       assert_equals(a, 42)
       assert_equals(b, 99)
@@ -57,6 +58,7 @@ def test_dynamic_exec():
           queue = [('ham', 'egg')]
           c, b = queue.pop()
           assert_equals((c, b), ('ham', 'egg'))
+          assert_equals(alocal, 'ham')
       Test()
     main('hello')
     assert_equals(a, 42)
