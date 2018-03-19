@@ -49,7 +49,7 @@ class _named_meta(type):
           new_annotations[key] = value
     new_annotations.update(annotations)
     self.__annotations__ = new_annotations
-    super().__init__(name, bases, data)
+    super(_named_meta, self).__init__(name, bases, data)
 
 
 class named(compat.with_metaclass(_named_meta)):
