@@ -40,6 +40,7 @@ class HashDict(nr.generic.Generic['hash_key']):
 """
 
 import types
+from .compat import range
 
 
 class GenericMeta(type):
@@ -72,7 +73,7 @@ class GenericMeta(type):
       cls.__generic_bind__ = None
     elif cls.__generic_bind__ is not None:
       assert len(cls.__generic_args__) == len(cls.__generic_bind__)
-      for i in xrange(len(cls.__generic_args__)):
+      for i in range(len(cls.__generic_args__)):
         value = cls.__generic_bind__[i]
         if isinstance(value, types.FunctionType):
           value = staticmethod(value)
@@ -97,11 +98,11 @@ class GenericMeta(type):
     cls = getattr(cls, '__generic_base__', cls)
     if not isinstance(args, tuple):
       args = (args,)
-    if len(args) > cls.__generic_args__:
+    if len(args) > len(cls.__generic_args__):
       raise TypeError('{} takes at most {} generic arguments ({} given)'
         .format(cls.__name__, len(cls.__generic_args__), len(args)))
     # Find the number of required arguments.
-    for index in xrange(len(cls.__generic_args__)):
+    for index in range(len(cls.__generic_args__)):
       if cls.__generic_args__[index][1] != NotImplemented:
         break
     else:
@@ -112,7 +113,7 @@ class GenericMeta(type):
         .format(cls.__name__, min_args, len(args)))
     # Bind the generic arguments.
     bind_data = []
-    for index in xrange(len(cls.__generic_args__)):
+    for index in range(len(cls.__generic_args__)):
       arg_name, arg_default = cls.__generic_args__[index]
       if index < len(args):
         arg_value = args[index]
@@ -122,6 +123,7 @@ class GenericMeta(type):
       bind_data.append(arg_value)
     type_name = '{}[{}]'.format(cls.__name__, ', '.join(repr(x) for x in bind_data))
     data = {
+      '__module__': cls.__module__,
       '__generic_bind__': bind_data,
       '__generic_base__': cls
     }

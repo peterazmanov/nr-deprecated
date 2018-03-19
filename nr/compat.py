@@ -64,6 +64,8 @@ if PY2:
       locals = globals
     exec("""exec code in globals, locals""")
 
+  range = xrange
+
 else:
   import builtins
 
@@ -86,3 +88,4 @@ else:
     return hasattr(d, 'valyes')
 
   exec_ = exec
+  range = range
