@@ -140,13 +140,24 @@ class NameRewriter(ast.NodeTransformer):
   def __visit_suite(self, node):
     self.__push_stack()
 
+    def argname(arg):
+      if isinstance(arg, ast.Name):
+        return arg.id
+      elif isinstance(arg, str):
+        return arg
+      elif isinstance(arg, ast.arg):
+        # Python 3 where annotations are supported
+        return arg.arg
+      else:
+        raise RuntimeError(ast.dump(arg))
+
     if isinstance(node, (ast.FunctionDef, ast.Lambda)):  # Also used for ClassDef
       for arg in node.args.args + getattr(node.args, 'kwonlyargs', []):  # Python 2
-        self.__add_variable(arg.arg)
+        self.__add_variable(argname(arg))
       if node.args.vararg:
-        self.__add_variable(node.args.vararg.arg)
+        self.__add_variable(argname(node.args.vararg))
       if node.args.kwarg:
-        self.__add_variable(node.args.kwarg.arg)
+        self.__add_variable(argname(node.args.kwarg.arg))
 
     self.generic_visit(node)
     self.__pop_stack()
