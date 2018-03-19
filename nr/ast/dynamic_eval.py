@@ -166,7 +166,7 @@ def transform(ast_node, data_var='__dict__'):
 
 
 def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
-                 filename='<string>', module_name=None, _type='exec'):
+                 filename=None, module_name=None, _type='exec'):
   """
   Transforms the Python source code *code* and evaluates it so that the
   *resolve* and *assign* functions are called respectively for when a global
@@ -182,36 +182,46 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
   callback.
   """
 
-  code = compile(transform(ast.parse(code, filename)), filename, _type)
-  if isinstance(resolve, collections.Mapping):
+  parse_filename = filename or '<string>'
+  code = compile(transform(ast.parse(code, parse_filename)), parse_filename, _type)
+  if hasattr(resolve, '__getitem__'):
     if assign is not None:
       raise TypeError('"assign" parameter specified where "resolve" is a mapping')
-    mapping = resolve
-  else:
-    class Mapping(dict):
-      def __getitem__(self, key):
-        if assign is None:
-          try:
-            return dict.__getitem__(self, key)
-          except KeyError:
-            pass  # Continue with resolve()
-        try:
-          return resolve(key)
-        except NameError:
-          if automatic_builtins:
-            try:
-              return getattr(builtins, key)
-            except AttributeError:
-              pass
-          raise
-      def __setitem__(self, key, value):
-        if assign is None:
-          dict.__setitem__(self, key, value)
-        else:
-          assign(key, value)
-    mapping = Mapping()
+    input_mapping = resolve
 
-  mapping['__file__'] = filename
+    def resolve(x):
+      try:
+        return input_mapping[x]
+      except KeyError:
+        raise NameError(x)
+
+    assign = input_mapping.__setitem__
+
+  class Mapping(dict):
+    def __getitem__(self, key):
+      if assign is None:
+        try:
+          return dict.__getitem__(self, key)
+        except KeyError:
+          pass  # Continue with resolve()
+      try:
+        return resolve(key)
+      except NameError:
+        if automatic_builtins:
+          try:
+            return getattr(builtins, key)
+          except AttributeError:
+            pass
+        raise
+    def __setitem__(self, key, value):
+      if assign is None:
+        dict.__setitem__(self, key, value)
+      else:
+        assign(key, value)
+
+  mapping = Mapping()
+  if filename:
+    mapping['__file__'] = filename
   globals_ = {'__dict__': mapping}
   if module_name:
     mapping['__name__'] = module_name
