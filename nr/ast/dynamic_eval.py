@@ -224,9 +224,12 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
         assign(key, value)
 
   mapping = Mapping()
+  globals_ = {'__dict__': mapping}
+
   if filename:
     mapping['__file__'] = filename
-  globals_ = {'__dict__': mapping}
+    globals_['__file__'] = filename
+
   if module_name:
     mapping['__name__'] = module_name
     globals_['__name__'] = module_name
