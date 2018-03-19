@@ -71,6 +71,15 @@ def test_dynamic_exec():
       del alocal
       with assert_raises(NameError):
         alocal
+      class ContextManager(object):
+        def __enter__(self):
+          return 'ContextManager!'
+        def __exit__(self,*a):
+          pass
+      with ContextManager() as value:
+        assert_equals(value, 'ContextManager!')
+      assert_equals(value, 'ContextManager!')
+      assert 'value' not in assignments()
     main('hello')
     assert_equals(a, 42)
     assert_equals(b, 0)
@@ -91,10 +100,20 @@ def test_exception_handler():
   code = textwrap.dedent('''
     import sys
     from nose.tools import *
+    def main():
+      try:
+        raise Exception
+      except Exception as e:
+        assert_is_instance(e, Exception)
+    main()
+    with assert_raises(NameError):
+      e
+
     try:
       raise Exception
     except Exception as e:
       assert_is_instance(e, Exception)
+
     if sys.version_info[0] == 3:
       with assert_raises(NameError):
         e

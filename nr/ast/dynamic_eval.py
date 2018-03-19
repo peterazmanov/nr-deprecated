@@ -50,6 +50,7 @@ Will be converted to:
 import ast
 import collections
 import textwrap
+import sys
 from ..compat import builtins, exec_
 
 
@@ -117,6 +118,13 @@ class NameRewriter(ast.NodeTransformer):
       targets=[self.__get_subscript(name, ast.Store())],
       value=ast.Name(id=name, ctx=ast.Load()))
 
+  def __get_subscript_delete(self, name):
+    """
+    Returns `del <data_var>["<name>"]`.
+    """
+
+    return ast.Delete(targets=[self.__get_subscript(name, ast.Del())])
+
   def __visit_target(self, node):
     """
     Call this method to visit assignment targets and to add local variables
@@ -124,9 +132,9 @@ class NameRewriter(ast.NodeTransformer):
     #__visit_comprehension().
     """
 
-    if isinstance(node, ast.Name):
+    if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
       self.__add_variable(node.id)
-    elif isinstance(node, ast.Tuple):
+    elif isinstance(node, (ast.Tuple, ast.List)):
       [self.__visit_target(x) for x in node.elts]
 
   def __visit_suite(self, node):
@@ -188,11 +196,19 @@ class NameRewriter(ast.NodeTransformer):
     return [node] + assignments
 
   def visit_ExceptHandler(self, node):
-    self.__push_stack()
     if node.name:
       self.__add_variable(node.name)
     self.generic_visit(node)
-    self.__pop_stack()
+    if not self.stack and node.name:
+      node.body.insert(0, self.__get_subscript_assign(node.name))
+      if sys.version_info[0] == 3:
+        node.body.append(self.__get_subscript_delete(node.name))
+    return node
+
+  def visit_With(self, node):
+    for item in node.items:
+      if item.optional_vars:
+        self.__visit_target(item.optional_vars)
     return node
 
   visit_FunctionDef = __visit_suite
