@@ -117,19 +117,54 @@ class NameRewriter(ast.NodeTransformer):
       targets=[self.__get_subscript(name, ast.Store())],
       value=ast.Name(id=name, ctx=ast.Load()))
 
+  def __visit_target(self, node):
+    """
+    Call this method to visit assignment targets and to add local variables
+    to the current stack frame. Used in #visit_Assign() and
+    #__visit_comprehension().
+    """
+
+    if isinstance(node, ast.Name):
+      self.__add_variable(node.id)
+    elif isinstance(node, ast.Tuple):
+      [self.__visit_target(x) for x in node.elts]
+
+  def __visit_suite(self, node):
+    self.__push_stack()
+
+    if isinstance(node, (ast.FunctionDef, ast.Lambda)):  # Also used for ClassDef
+      for arg in node.args.args + node.args.kwonlyargs:
+        self.__add_variable(arg.arg)
+      if node.args.vararg:
+        self.__add_variable(node.args.vararg.arg)
+      if node.args.kwarg:
+        self.__add_variable(node.args.kwarg.arg)
+
+    self.generic_visit(node)
+    self.__pop_stack()
+
+    if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+      assign = self.__get_subscript_assign(node.name)
+      return [node, assign]
+    else:
+      return node
+
+  def __visit_comprehension(self, node):
+    self.__push_stack()
+    for comp in node.generators:
+      self.__visit_target(comp.target)
+    self.generic_visit(node)
+    self.__pop_stack()
+    return node
+
   def visit_Name(self, node):
     if not self.__is_local(node.id):
       node = ast.copy_location(self.__get_subscript(node.id, node.ctx), node)
     return node
 
   def visit_Assign(self, node):
-    def visit(node):
-      if isinstance(node, ast.Name):
-        self.__add_variable(node.id)
-      elif isinstance(node, ast.Tuple):
-        [visit(x) for x in node.elts]
     for target in node.targets:
-      visit(target)
+      self.__visit_target(target)
     self.generic_visit(node)
     return node
 
@@ -152,21 +187,22 @@ class NameRewriter(ast.NodeTransformer):
         assignments.append(self.__get_subscript_assign(name))
     return [node] + assignments
 
-  def visit_FunctionDef(self, node):
+  def visit_ExceptHandler(self, node):
     self.__push_stack()
-    if isinstance(node, ast.FunctionDef):  # Also used for ClassDef
-      for arg in node.args.args + node.args.kwonlyargs:
-        self.__add_variable(arg.arg)
-      if node.args.vararg:
-        self.__add_variable(node.args.vararg.arg)
-      if node.args.kwarg:
-        self.__add_variable(node.args.kwarg.arg)
+    if node.name:
+      self.__add_variable(node.name)
     self.generic_visit(node)
     self.__pop_stack()
-    assign = self.__get_subscript_assign(node.name)
-    return [node, assign]
+    return node
 
-  visit_ClassDef = visit_FunctionDef
+  visit_FunctionDef = __visit_suite
+  visit_Lambda = __visit_suite
+  visit_ClassDef = __visit_suite
+
+  visit_ListComp = __visit_comprehension
+  visit_SetComp = __visit_comprehension
+  visit_GeneratorExp = __visit_comprehension
+  visit_DictComp = __visit_comprehension
 
   def visit_Global(self, node):
     for name in node.names:
@@ -179,7 +215,7 @@ def transform(ast_node, data_var='__dict__'):
   return ast_node
 
 
-def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
+def dynamic_exec(code, resolve, assign=None, delete=None, automatic_builtins=True,
                  filename=None, module_name=None, _type='exec'):
   """
   Transforms the Python source code *code* and evaluates it so that the
@@ -202,6 +238,8 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
   if hasattr(resolve, '__getitem__'):
     if assign is not None:
       raise TypeError('"assign" parameter specified where "resolve" is a mapping')
+    if delete is not None:
+      raise TypeError('"delete" parameter specified where "resolve" is a mapping')
     input_mapping = resolve
 
     def resolve(x):
@@ -211,17 +249,22 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
         raise NameError(x)
 
     assign = input_mapping.__setitem__
+
+    delete = input_mapping.__delitem__
   else:
     input_mapping = False
 
   class DynamicMapping(object):
     _data = {}
+    _deleted = set()
     def __repr__(self):
       if input_mapping:
         return 'DynamicMapping({!r})'.format(input_mapping)
       else:
         return 'DynamicMapping(resolve={!r}, assign={!r})'.format(resolve, assign)
     def __getitem__(self, key):
+      if key in self._deleted:
+        raise NameError(key)
       if assign is None:
         try:
           return self._data[key]
@@ -237,10 +280,16 @@ def dynamic_exec(code, resolve, assign=None, automatic_builtins=True,
             pass
         raise
     def __setitem__(self, key, value):
+      self._deleted.discard(key)
       if assign is None:
         self._data[key] = value
       else:
         assign(key, value)
+    def __delitem__(self, key):
+      if delete is None:
+        self._deleted.add(key)
+      else:
+        delete(key)
     def get(self, key, default=None):
       try:
         return self[key]
