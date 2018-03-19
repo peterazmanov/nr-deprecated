@@ -63,6 +63,14 @@ def test_dynamic_exec():
       assert_equals(b, 99)
       assert_equals(assignments()['a'], 42)
       assert_equals(assignments()['b'], 0)
+      for i in range(10):
+        pass
+      assert 'i' not in assignments(), 'i in assignments'
+      assert_equals(i, 9)
+      for j in range(10):
+        j = j*2
+      assert 'j' not in assignments(), 'j in assignments'
+      assert_equals(j, 18)
       class Test:
         def __init__(self):
           queue = [('ham', 'egg')]

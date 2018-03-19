@@ -236,6 +236,11 @@ class NameRewriter(ast.NodeTransformer):
     self.generic_visit(node)
     return node
 
+  def visit_For(self, node):
+    self.__visit_target(node.target)
+    self.generic_visit(node)
+    return node
+
   visit_FunctionDef = __visit_suite
   visit_Lambda = __visit_suite
   visit_ClassDef = __visit_suite
