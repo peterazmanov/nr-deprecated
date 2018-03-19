@@ -141,7 +141,7 @@ class NameRewriter(ast.NodeTransformer):
     self.__push_stack()
 
     if isinstance(node, (ast.FunctionDef, ast.Lambda)):  # Also used for ClassDef
-      for arg in node.args.args + node.args.kwonlyargs:
+      for arg in node.args.args + getattr(node.args, 'kwonlyargs', []):  # Python 2
         self.__add_variable(arg.arg)
       if node.args.vararg:
         self.__add_variable(node.args.vararg.arg)
@@ -206,9 +206,12 @@ class NameRewriter(ast.NodeTransformer):
     return node
 
   def visit_With(self, node):
-    for item in node.items:
-      if item.optional_vars:
-        self.__visit_target(item.optional_vars)
+    if hasattr(node, 'items'):
+      optional_vars = [x.optional_vars for x in node.items]
+    else:
+      # Python 2
+      optional_vars = [node.optional_vars]
+    [self.__visit_target(x) for x in optional_vars if x]
     return node
 
   visit_FunctionDef = __visit_suite
