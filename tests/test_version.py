@@ -18,6 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import unittest
+import sys
+
+if sys.version[:3] <= '2.6':
+  raise unittest.SkipTest("nr.version requires Python 2.7 or Python 3")
+
 from nose.tools import *
 from nr.version import Version, VersionCriteria
 

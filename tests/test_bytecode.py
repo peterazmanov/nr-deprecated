@@ -19,19 +19,17 @@
 # THE SOFTWARE.
 
 import dis
+import unittest
 import sys
+
+if sys.version_info[0] != 3:
+  raise unittest.SkipTest("nr.py.bytecode is only Python 3.4+ compatible")
 
 from nose.tools import *
 from sys import _getframe
 from nr.py.bytecode import get_assigned_name, opstackd
 
-if sys.version_info[0] == 3:
-  py3only = istest
-else:
-  print('note: skipping tests for nr.py.bytecode on Python {}'.format(sys.version[:3]))
-  py3only = nottest
 
-@py3only
 def test_opstackd_integrity():
   """
   Test if all keys in `magic.opstackd` are valid opcodes.
@@ -40,7 +38,7 @@ def test_opstackd_integrity():
   for key in opstackd:
     assert_in(key, dis.opname)
 
-@py3only
+
 def test_get_assigned_name_simple():
   """
   Test `magic.get_assigned_name()` in various use cases.
@@ -65,7 +63,7 @@ def test_get_assigned_name_simple():
     spam = [42] + [get_assigned_name(_getframe())] + ["bar"]
     assert "spam" == spam[0]
 
-@py3only
+
 def test_get_assigned_name_complex():
 
   def target1(inputs):
