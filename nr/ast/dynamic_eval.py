@@ -136,7 +136,7 @@ class NameRewriter(ast.NodeTransformer):
   def visit_Import(self, node):
     assignments = []
     for alias in node.names:
-      name = alias.asname or alias.name
+      name = (alias.asname or alias.name).split('.')[0]
       assignments.append(self.__get_subscript_assign(name))
     return [node] + assignments
 

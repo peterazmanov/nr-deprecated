@@ -39,6 +39,7 @@ def test_dynamic_exec():
   code = textwrap.dedent('''
     from nose.tools import *
     import os
+    import os.path
     a, b = 0, 0
     def main(param1):
       global a
