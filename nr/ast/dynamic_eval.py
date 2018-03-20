@@ -159,6 +159,13 @@ class NameRewriter(ast.NodeTransformer):
         result = [node, ast.copy_location(assign, node)]
 
     self.__push_stack()
+
+    if sys.version_info[0] > 2 and isinstance(node, ast.ClassDef):
+      # TODO: This is a bit of a dirty hack to make sure that super and
+      #       __class__ are considered as local variables in functions.
+      self.__add_variable('super')
+      self.__add_variable('__class__')
+
     if isinstance(node, (ast.FunctionDef, ast.Lambda)):  # Also used for ClassDef
       for arg in node.args.args + getattr(node.args, 'kwonlyargs', []):  # Python 2
         self.__add_variable(get_argname(arg))

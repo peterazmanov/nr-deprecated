@@ -209,6 +209,43 @@ def test_recursion():
   dynamic_exec(code, {})
 
 
+def test_super():
+  code = textwrap.dedent('''
+    def main():
+      class Test(object):
+        def __init__(self):
+          super(Test, self).__init__()
+      Test()
+    main()
+
+    class Test(object):
+      def __init__(self):
+        super(Test, self).__init__()
+    Test()
+  ''')
+  dynamic_exec(code, {})
+
+  if sys.version_info[0] >= 3:
+    code = textwrap.dedent('''
+      from nose.tools import assert_equals
+
+      def main():
+        class Test(object):
+          def __init__(self):
+            assert_equals(__class__, Test)
+            super().__init__()
+        Test()
+      main()
+
+      class Test(object):
+        def __init__(self):
+          assert_equals(__class__, Test)
+          super().__init__()
+      Test()
+    ''')
+    dynamic_exec(code, {})
+
+
 def test_builtin_members():
   code = textwrap.dedent('''
     from nose.tools import *
