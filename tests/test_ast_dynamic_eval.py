@@ -252,5 +252,20 @@ def test_builtin_members():
     with assert_raises(NameError):
       __class__
   ''')
+  dynamic_exec(code, {})
 
+
+def test_class_members():
+  code = textwrap.dedent('''
+    from nose.tools import assert_equals
+    a = 42
+    class Test:
+      a = 99
+      assert_equals(a, 99)
+      def __init__(self):
+        assert_equals(a, 42)
+        assert_equals(self.a, 99)
+    assert_equals(a, 42)
+    assert_equals(Test.a, 99)
+  ''')
   dynamic_exec(code, {})
