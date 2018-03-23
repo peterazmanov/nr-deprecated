@@ -52,6 +52,7 @@ setuptools.setup(
   author='Niklas Rosenstein',
   author_email='rosensteinniklas@gmail.com',
   packages=setuptools.find_packages(),
+  package_data={'nr': ['tools/licenses/*/*']},
   install_requires=[],
   entry_points = {
     'console_scripts': [
