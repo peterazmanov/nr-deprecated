@@ -87,7 +87,7 @@ def rel(path, parent=None, par=False):
       return abs(path)
     raise
   else:
-    if not issub(res):
+    if not par and not issub(res):
       return abs(path)
     return res
 
@@ -105,7 +105,8 @@ def issub(path):
 
   if isabs(path):
     return False
-  if path.startswith(curdir + sep) or path.startswith(pardir + sep):
+  if path.startswith(curdir + sep) or path.startswith(pardir + sep) or \
+      path == curdir or path == pardir:
     return False
   return True
 
