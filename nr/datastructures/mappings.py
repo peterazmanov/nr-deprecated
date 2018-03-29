@@ -23,6 +23,110 @@
 from .. import compat
 from ..stream import stream
 
+try: from collections import OrderedDict
+except ImportError: from ._ordereddict import OrderedDict
+
+
+class MappingFromObject(object):
+  """
+  This class wraps an object and exposes its members as mapping.
+  """
+
+  def __new__(cls, obj):
+    if isinstance(obj, ObjectFromMapping):
+      return obj._ObjectFromMapping__mapping
+    return super(MappingFromObject, cls).__new__(cls)
+
+  def __init__(self, obj):
+    self.__obj = obj
+
+  def __repr__(self):
+    return 'MappingFromObject({!r})'.format(self.__obj)
+
+  def __iter__(self):
+    return self.keys()
+
+  def __len__(self):
+    return len(dir(self.__obj))
+
+  def __contains__(self, key):
+    return hasattr(self.__obj, key)
+
+  def __getitem__(self, key):
+    try:
+      return getattr(self.__obj, key)
+    except AttributeError:
+      raise KeyError(key)
+
+  def __setitem__(self, key, value):
+    setattr(self.__obj, key, value)
+
+  def __delitem__(self, key):
+    delattr(self.__obj, key)
+
+  def keys(self):
+    return iter(dir(self.__obj))
+
+  def values(self):
+    return (getattr(self.__obj, k) for k in dir(self.__obj))
+
+  def items(self):
+    return ((k, getattr(self.__obj, k)) for k in dir(self.__obj))
+
+  def get(self, key, default=None):
+    return getattr(self.__obj, key, default)
+
+  def setdefault(self, key, value):
+    try:
+      return getattr(self.__obj, key)
+    except AttributeError:
+      setattr(self.__obj, key, value)
+      return value
+
+
+class ObjectFromMapping(object):
+  """
+  This class wraps a dictionary and exposes its values as members.
+  """
+
+  def __new__(cls, mapping, name=None):
+    if isinstance(mapping, MappingFromObject):
+      return mapping._MappingFromObject__obj
+    return super(ObjectFromMapping, cls).__new__(cls)
+
+  def __init__(self, mapping, name=None):
+    self.__mapping = mapping
+    self.__name = name
+
+  def __getattribute__(self, key):
+    if key.startswith('_ObjectFromMapping__'):
+      return super(ObjectFromMapping, self).__getattribute__(key)
+    try:
+      return self.__mapping[key]
+    except KeyError:
+      raise AttributeError(key)
+
+  def __setattr__(self, key, value):
+    if key.startswith('_ObjectFromMapping__'):
+      super(ObjectFromMapping, self).__setattr__(key, value)
+    else:
+      self.__mapping[key] = value
+
+  def __delattr__(self, key):
+    if key.startswith('_ObjectFromMapping__'):
+      super(ObjectFromMapping, self).__delattr__(key)
+    else:
+      del self.__mapping[key]
+
+  def __dir__(self):
+    return sorted(self.__mapping.keys())
+
+  def __repr__(self):
+    if self.__name:
+      return '<ObjectFromMapping name={!r}>'.format(self.__name)
+    else:
+      return '<ObjectFromMapping {!r}>'.format(self.__mapping)
+
 
 class ChainDict(object):
   """
@@ -164,3 +268,4 @@ class ChainDict(object):
     values = lambda self: list(self.itervalues())
     iteritems = items
     items = lambda self: list(self.iteritems())
+
