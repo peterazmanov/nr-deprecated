@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .datastructures.ordereddict import OrderedDict
+from .datastructures.mappings import OrderedDict
 from . import compat
 
 

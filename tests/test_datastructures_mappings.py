@@ -21,9 +21,10 @@
 # SOFTWARE.
 
 from nose.tools import *
-from nr.datastructures.chaindict import ChainDict
+from nr.datastructures.mappings import ChainDict, ObjectFromMapping
 
-def test_chaindict():
+
+def test_ChainDict():
   a = {'foo': 42}
   b = {'bar': 'spam'}
   c = {}
@@ -57,3 +58,12 @@ def test_chaindict():
   assert_equals(b, {'bar': 'spam'})
   assert_equals(c, {})
   assert_equals(d, {})
+
+
+def test_ObjectFromMapping():
+  d = ChainDict({'a': 42, 'b': 'foo'}, {'c': 'egg'})
+  o = ObjectFromMapping(d)
+  assert_equals(o.a, 42)
+  assert_equals(o.b, 'foo')
+  assert_equals(o.c, 'egg')
+  assert_equals(dir(o), ['a', 'b', 'c'])
