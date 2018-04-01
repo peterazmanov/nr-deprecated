@@ -69,6 +69,7 @@ if PY2:
   string_types = (str, unicode)
   text_type = unicode
   binary_type = str
+  integer_types = (int, long)
 
 else:
   import builtins
@@ -97,3 +98,4 @@ else:
   string_types = (str,)
   text_type = str
   binary_type = bytes
+  integer_types = (int,)

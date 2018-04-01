@@ -270,7 +270,7 @@ class Enumeration(compat.with_metaclass(EnumerationMeta)):
 
     # Try to find the actual instance of the Enumeration class
     # for the integer value and return it if it is available.
-    if isinstance(value, int):
+    if isinstance(value, compat.integer_types):
       try:
         value = cls._values[value]
       except KeyError:
@@ -298,7 +298,7 @@ class Enumeration(compat.with_metaclass(EnumerationMeta)):
     if type(value) == cls:
       return value
 
-    raise TypeError('value must be %s or int' % cls.__name__)
+    raise TypeError('value must be %s or int, got %s' % (cls.__name__, type(value).__name__))
 
   def __hash__(self):
     return hash(self.name)
