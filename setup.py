@@ -44,7 +44,7 @@ else:
 
 setuptools.setup(
   name='nr',
-  version='2.0.9',
+  version='2.0.10',
   license='MIT',
   description='Compound utility library and command-line tools for Python 2/3',
   long_description=long_description,
