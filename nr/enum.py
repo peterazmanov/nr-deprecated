@@ -107,6 +107,7 @@ print Color.red.astuple
 
 import sys
 import ctypes
+from . import compat
 
 if sys.version_info[0] < 3:
   string_types = (basestring,)
@@ -214,7 +215,7 @@ class EnumerationMeta(type):
     # Iterate over all entries in the data entries and
     # convert integral values to instances of the enumeration
     # class.
-    for key, value in enum_values.iteritems():
+    for key, value in compat.iteritems(enum_values):
 
       # Create the new object. We must not use the classes'
       # __new__() method as it resolves the object from the
@@ -233,7 +234,7 @@ class EnumerationMeta(type):
 
 
     # Convert the collections.
-    for key, value in collections.iteritems():
+    for key, value in compat.iteritems(collections):
       value = type(value)(class_(v) for v in value)
       setattr(class_, key, value)
 
