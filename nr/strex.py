@@ -377,9 +377,10 @@ class Lexer(object):
     An expected Token will not be skipped, even if its rule defines it so.
 
     # Arguments
-    expectation (str): The name of one or more rules that are expected from the
-      current position of the parser. If empty, the first matching token of ALL
-      rules will be returned. In this case, skippable tokens will be skipped.
+    expectation (str, Rule): The name of one or more rules that are expected
+      or actual #Rule objects from the current position of the lexer. If
+      empty, the first matching token of ALL rules will be returned. In this
+      case, skippable tokens will be skipped.
     as_accept (bool): If passed True, this method behaves the same as the
       #accept() method. The default value is #False.
     weighted (bool): If passed True, the tokens specified with *expectations*
@@ -418,13 +419,17 @@ class Lexer(object):
         break
 
       value = None
+      is_expected = True
 
       # Try to match the expected tokens.
       if weighted:
         for rule_name in expectation:
           if rule_name == eof:
             continue
-          rules = self.rules_map.get(rule_name)
+          if isinstance(rule_name, Rule):
+            rule_name, rules = rule_name.name, [rule_name]
+          else:
+            rules = self.rules_map.get(rule_name)
           if rules is None:
             raise ValueError('unknown rule', rule_name)
           for rule in rules:
@@ -439,6 +444,7 @@ class Lexer(object):
       # like the accept() method that doesn't need the next token
       # for raising an UnexpectedTokenError.
       if not value:
+        is_expected = False
         if as_accept and weighted:
           # Check only skippable rules if we're only trying to accept
           # a certain token type and may consume any skippable tokens
@@ -469,12 +475,11 @@ class Lexer(object):
           value = Token(rule.name, cursor, value, string_repr)
         token = value
 
-        expected = rule.name in expectation
-        if not expected and rule.skip:
+        if not is_expected and rule.skip:
           # If we didn't expect this rule to match, and if its skippable,
           # just skip it. :-)
           token = None
-        elif not expected and as_accept:
+        elif not is_expected and as_accept:
           # If we didn't expect this rule to match but are just accepting
           # instead of expecting, restore to the original location and stop.
           self.scanner.restore(cursor)
@@ -490,7 +495,7 @@ class Lexer(object):
       raise TokenizationError(token)
     if not as_accept and expectation and token.type not in expectation:
       raise UnexpectedTokenError(expectation, token)
-    assert not as_accept or (token and token.type in expectation)
+    assert not as_accept or is_expected
     return token
 
 
