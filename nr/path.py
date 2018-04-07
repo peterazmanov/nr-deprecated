@@ -25,8 +25,10 @@ adds a lot of additional functionality.
 """
 
 import errno
+import functools
+import operator
 import os
-import stat
+import stat as _stat
 
 from os import (
   sep,
@@ -283,9 +285,9 @@ def chmod_update(flags, modstring):
   """
 
   mapping = {
-    'r': (stat.S_IRUSR, stat.S_IRGRP, stat.S_IROTH),
-    'w': (stat.S_IWUSR, stat.S_IWGRP, stat.S_IWOTH),
-    'x': (stat.S_IXUSR, stat.S_IXGRP, stat.S_IXOTH)
+    'r': (_stat.S_IRUSR, _stat.S_IRGRP, _stat.S_IROTH),
+    'w': (_stat.S_IWUSR, _stat.S_IWGRP, _stat.S_IWOTH),
+    'x': (_stat.S_IXUSR, _stat.S_IXGRP, _stat.S_IXOTH)
   }
 
   target, direction = 'a', None
@@ -318,9 +320,9 @@ def chmod_repr(flags):
   """
 
   template = 'rwxrwxrwx'
-  order = (stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR,
-           stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP,
-           stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH)
+  order = (_stat.S_IRUSR, _stat.S_IWUSR, _stat.S_IXUSR,
+           _stat.S_IRGRP, _stat.S_IWGRP, _stat.S_IXGRP,
+           _stat.S_IROTH, _stat.S_IWOTH, _stat.S_IXOTH)
   return ''.join(template[i] if flags&x else '-'
                  for i, x in enumerate(order))
 
