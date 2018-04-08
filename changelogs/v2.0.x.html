@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <title>v2.0.x</title>
+    <link href="../static/style.css" rel="stylesheet">
+    <link href="../static/pygments.css" rel="stylesheet">
+  </head>
+  <body>
+    
+    <div class="sidebar">
+      
+      <div class="title">
+        <p><a href="../index.html"><code>nr</code> Python Library</a></p>
+      </div>
+      <hr/>
+      <div class="toc">
+        
+    <ul>
+      
+      <li><a class="" href="../index.html">Home</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../cli.html">Command-line Tools</a></li>
+      
+      
+    <ul>
+      
+      <li><a class="" href="../cli/archive.html">archive</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../cli/grablicense.html">grablicense</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../cli/jiratime.html">jiratime</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../cli/py.blob.html">py.blob</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../cli/versionupgrade.html">versionupgrade</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+    </ul>
+    
+      
+      <li><a class="" >nr Modules</a></li>
+      
+      
+    <ul>
+      
+      <li><a class="" href="../modules/admin.html">admin</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/archive.html">archive</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/ast.html">ast</a></li>
+      
+      
+    <ul>
+      
+      <li><a class="" href="../modules/ast/dynamic_eval.html">dynamic_eval</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/compat.html">compat</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/concurrency.html">concurrency</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/datastructures.html">datastructures</a></li>
+      
+      
+    <ul>
+      
+      <li><a class="" href="../modules/datastructures/mappings.html">mappings</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/enum.html">enum</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/generic.html">generic</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/gitignore.html">gitignore</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/named.html">named</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/path.html">path</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/py.html">py</a></li>
+      
+      
+    <ul>
+      
+      <li><a class="" href="../modules/py/blob.html">blob</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/py/bytecode.html">bytecode</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/py/context.html">context</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/py/decorators.html">decorators</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/py/meta.html">meta</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/recordclass.html">recordclass</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/stream.html">stream</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/strex.html">strex</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/tempfile.html">tempfile</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="" href="../modules/version.html">version</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+    </ul>
+    
+      
+      <li><a class="" >Changelogs</a></li>
+      
+      
+    <ul>
+      
+      <li><a class="" href="v1.4.10-pre.html">v1.4.10-pre</a></li>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+      <li><a class="active" href="v2.0.x.html">v2.0.x</a></li>
+      
+        <div class="toc"><ul><li><a href="#v2.0.12-unreleased">v2.0.12 (unreleased)</a></li><li><a href="#v2.0.11-2018-04-07">v2.0.11 (2018-04-07)</a></li><li><a href="#v2.0.10-2018-04-01">v2.0.10 (2018-04-01)</a></li><li><a href="#v2.0.9-2018-04-01">v2.0.9 (2018-04-01)</a></li><li><a href="#v2.0.8-2018-03-30">v2.0.8 (2018-03-30)</a></li><li><a href="#v2.0.7-2018-03-20">v2.0.7 (2018-03-20)</a></li><li><a href="#v2.0.6-2018-03-19">v2.0.6 (2018-03-19)</a></li><li><a href="#v2.0.5-2018-03-19">v2.0.5 (2018-03-19)</a></li><li><a href="#v2.0.4-2018-03-19">v2.0.4 (2018-03-19)</a></li><li><a href="#v2.0.3-2018-03-08">v2.0.3 (2018-03-08)</a></li><li><a href="#v2.0.2-2018-03-08">v2.0.2 (2018-03-08)</a></li><li><a href="#v2.0.1-2018-03-06">v2.0.1 (2018-03-06)</a></li><li><a href="#v2.0.0">v2.0.0</a></li></ul></div>
+      
+      
+    <ul>
+      
+    </ul>
+    
+      
+    </ul>
+    
+      
+    </ul>
+    
+      </div>
+      
+      <hr/>
+      <div class="statigen-notice">Built with <a href="https://github.com/NiklasRosenstein/statigen">statigen</a>.</div>
+    </div>
+    <div class="content">
+      <div class="content-inner">
+        
+          <h1>v2.0.x</h1>
+        
+        <h1 id="v2.0.12-unreleased">v2.0.12 (unreleased)</h1>
+<ul>
+<li>add <code class="codespan">nr.admin</code> module
+</li>
+<li>moved <code class="codespan">nr.decorators</code> to <code class="codespan">nr.py.decorators</code>
+</li></ul><h1 id="v2.0.11-2018-04-07">v2.0.11 (2018-04-07)</h1>
+<ul>
+<li>fix <code class="codespan">nr.path</code> missing imports for <code class="codespan">chmod_update()</code> and <code class="codespan">chmod_repr()</code>
+</li>
+<li>made <code class="codespan">nr versionupgrade</code> syntax Python 2 compatible
+</li></ul><h1 id="v2.0.10-2018-04-01">v2.0.10 (2018-04-01)</h1>
+<ul>
+<li><code class="codespan">nr.enum</code>: Enumeration constructor now accepts <code class="codespan">long</code> in Python 2
+</li>
+<li><code class="codespan">nr.comapt</code>: Add <code class="codespan">integer_types</code> member
+</li></ul><h1 id="v2.0.9-2018-04-01">v2.0.9 (2018-04-01)</h1>
+<ul>
+<li>fix <code class="codespan">nr.enum</code>
+</li></ul><h1 id="v2.0.8-2018-03-30">v2.0.8 (2018-03-30)</h1>
+<p><strong><em>nr.datastructures</em></strong></p>
+<ul>
+<li>Merge <code class="codespan">.objectfrommapping</code>, <code class="codespan">.chaindict</code> and <code class="codespan">.ordereddict</code> modules into
+the <code class="codespan">.mappings module</code>
+</li>
+<li>Add <code class="codespan">.mappings.MappingFromObject</code>
+</li></ul><h1 id="v2.0.7-2018-03-20">v2.0.7 (2018-03-20)</h1>
+<p><strong><em>nr.ast.dynamic_eval</em></strong></p>
+<ul>
+<li>support assignments in a <code class="codespan">for</code> statement
+</li>
+<li>fix fallback to builtins causing availablity of <code class="codespan">__class__</code> variable
+resulting in the <code class="codespan"><class 'module'></code> type being returned from
+<code class="codespan">builtins.__class__</code>
+</li>
+<li>Python 3: avoid rewriting <code class="codespan">super</code> and <code class="codespan">__class__</code> inside class definitions
+and their function bodies by declaring them as local variables always
+</li></ul>
+<p><strong><em>nr.datastructures.objectfrommapping</em></strong></p>
+<ul>
+<li>new module with <code class="codespan">ObjectFromMapping</code> class
+</li></ul><h1 id="v2.0.6-2018-03-19">v2.0.6 (2018-03-19)</h1>
+<p><strong><em>nr.ast.dynamic_eval</em></strong></p>
+<ul>
+<li>fix missing visit for <code class="codespan">with</code> statement body
+</li>
+<li>fix variable assignment to dynamic mapping for class and function definitions
+</li>
+<li>fix recursive calls nested in another function
+</li></ul><h1 id="v2.0.5-2018-03-19">v2.0.5 (2018-03-19)</h1>
+<p><strong><em>nr.compat</em></strong></p>
+<ul>
+<li>add <code class="codespan">range</code>
+</li>
+<li>add <code class="codespan">string_types</code>, <code class="codespan">text_type</code> and <code class="codespan">binary_type</code>
+</li>
+<li>fix for Python 2 where <code class="codespan">exec</code> is a keyword and it was causing a SyntaxError
+</li></ul>
+<p><strong><em>nr.generic</em></strong></p>
+<ul>
+<li>fix for use in Python 3 (replace <code class="codespan">xrange()</code> with <code class="codespan">range()</code>)
+</li>
+<li>fix <code class="codespan">__module__</code> member for classes generated with <code class="codespan">GenericMeta.__getitem__()</code>
+</li></ul>
+<p><strong><em>nr.ast.dynamic_eval</em></strong></p>
+<ul>
+<li>renamed <code class="codespan">Mapping</code> class to <code class="codespan">DynamicMapping</code> and it no longer inherits from <code class="codespan">dict</code>
+</li>
+<li>add support for function and lambda arguments
+</li>
+<li>add support for assignments using sequence unpacking
+</li>
+<li>add support for comprehensions
+</li>
+<li>add support for the name assigned to exception handlers
+</li>
+<li>add support for the names assigned via a <code class="codespan">with</code> statement
+</li>
+<li>add <code class="codespan">__file__</code> to actual Python globals in <code class="codespan">dynamic_eval()</code>
+</li>
+<li>add <code class="codespan">DynamicMapping.get()</code> implementation
+</li>
+<li>add <code class="codespan">DynamicMapping.__repr__()</code> implementation
+</li>
+<li>add <code class="codespan">DynamicMapping.__delitem__()</code> implementation
+</li>
+<li>add <code class="codespan">dynamic_eval(delete)</code> and <code class="codespan">dynamic_exec(delete)</code> argument
+</li>
+<li>add Python 2 support (different AST interface)
+</li>
+<li>fix Python 2 behaviour where comprehensions do not have their own scope
+</li>
+<li>fix raising <code class="codespan">NameError</code> when <code class="codespan">AttributeError</code> is raised from trying to
+resolve a variable from <code class="codespan">builtins</code>
+</li>
+<li>fix AST source locations by calling <code class="codespan">ast.copy_location()</code> where new nodes
+are created (seems to be relevant only for Python 2, in Python 3
+<code class="codespan">fix_missing_locations()</code> seems to do proper work)
+</li>
+<li>fix <code class="codespan">dynamic_eval()</code> by passing correct <code class="codespan">mode='eval'</code> to <code class="codespan">ast.parse()</code>
+</li>
+<li>fix access to non-local variables
+</li>
+<li>fix imports with dots in the name (eg. <code class="codespan">import os.path</code>)
+</li></ul>
+<p><strong><em>nr.datastructures.chaindict</em></strong></p>
+<ul>
+<li>fix wrong <code class="codespan">nr.stream.stream</code> class import, fixes <code class="codespan">ChainDict.__len__()</code>
+</li></ul>
+<p><strong><em>nr.path</em></strong></p>
+<ul>
+<li>remove annotations for Python 2 compatibility
+</li></ul>
+<p><strong><em>nr.named</em></strong></p>
+<ul>
+<li>fix <code class="codespan">super()</code> call for Python 2
+</li></ul><h1 id="v2.0.4-2018-03-19">v2.0.4 (2018-03-19)</h1>
+<ul>
+<li>add <code class="codespan">builtins</code> and <code class="codespan">exec_</code> to <code class="codespan">nr.compat</code>
+</li>
+<li>add <code class="codespan">nr.ast</code> package
+</li>
+<li>add <code class="codespan">nr.ast.dynamic_eval</code> module
+</li>
+<li><code class="codespan">nr versionuprade</code> now supports a new <code class="codespan">sub filename:old:new</code> instruction
+</li></ul><h1 id="v2.0.3-2018-03-08">v2.0.3 (2018-03-08)</h1>
+<ul>
+<li>fix <code class="codespan">setup.py</code>, use <code class="codespan">setuptools_readme</code> for distribution
+</li>
+<li>add missing <code class="codespan">errno</code> import to <code class="codespan">nr.path</code>, <code class="codespan">makedirs()</code> now compatible with
+Python < 3.2
+</li></ul><h1 id="v2.0.2-2018-03-08">v2.0.2 (2018-03-08)</h1>
+<ul>
+<li>add <code class="codespan">nr grablicense --badge</code> option
+</li>
+<li>add <code class="codespan">nr.path.compare_timestamp()</code>
+</li></ul><h1 id="v2.0.1-2018-03-06">v2.0.1 (2018-03-06)</h1>
+<ul>
+<li>fix <code class="codespan">nr.named.initializer</code> alias
+</li>
+<li>fix <code class="codespan">nr grablicense</code> command, update MIT license width
+</li>
+<li>move <code class="codespan">nr.versionupgrade</code> to <code class="codespan">nr.tools.versionupgrade</code>
+</li>
+<li>update <code class="codespan">nr.enum</code> to use metaclass helper in <code class="codespan">nr.compat</code>
+</li>
+<li>add <code class="codespan">nr.compat</code>
+</li>
+<li>add <code class="codespan">nr.datastructures.ChainDict</code>
+</li>
+<li>add <code class="codespan">nr.generic</code>
+</li></ul><h1 id="v2.0.0">v2.0.0</h1>
+<ul>
+<li>Update module structure
+</li>
+<li>Removed <code class="codespan">nr.misc.cli</code> module
+</li>
+<li>Removed <code class="codespan">nr.types.singleton</code> module
+</li></ul>
+<p><strong><em>nr.version</em></strong></p>
+<ul>
+<li>New semantic, a <code class="codespan">.extension</code> indicates that it is higher than the
+version without the extension, a <code class="codespan">-extension</code> indicates that it is lower.
+</li>
+<li>Add <code class="codespan">+extension</code> as synonym for <code class="codespan">.extension</code>
+</li>
+<li>Allow version number extensions without a separating character, behaving
+like a <code class="codespan">+extension</code> or <code class="codespan">.extension</code>
+</li></ul>
+      </div>
+    </div>
+  </body>
+</html>
