@@ -65,7 +65,7 @@ def quote(s):
   return s
 
 
-def is_user_an_admin():
+def is_admin():
   if os.name == 'nt':
     try:
       return ctypes.windll.shell32.IsUserAnAdmin()
@@ -179,7 +179,7 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   if args.windows_process_data:
-    if not is_user_an_admin():
+    if not is_admin():
       alert("--windows-process-data can only be used in an elevated process.")
       sys.exit(1)
     sys.exit(_run_as_admin_windows_elevated(args.windows_process_data))
