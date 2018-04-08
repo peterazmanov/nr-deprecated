@@ -10,6 +10,8 @@ currently not automatically installed when install `nr`.
 
 ### Components
 
+* `nr.admin` &ndash; Run a command with elevated privileges on Windows and
+  Posix systems.
 * `nr.archive` &ndash; Archive handling abstraction.
 * `nr.ast` &ndash; Tools to work with the Python AST.
   * `nr.ast.dynamic_eval` &ndash; Allows you to execute Python code with hooks
