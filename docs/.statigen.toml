@@ -1,0 +1,5 @@
+[statigen]
+template = "default/docs"
+
+[site]
+title = "<code>nr</code> Python Library"

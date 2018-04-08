@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import itertools
-from .decorators import dualmethod
+from .py.decorators import dualmethod
 
 
 class stream:

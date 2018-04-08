@@ -1,0 +1,4 @@
++++
+description = "String scanner/lexer."
++++
+
