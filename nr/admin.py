@@ -29,22 +29,118 @@ Requires pywin32 on Windows.
 """
 
 from __future__ import print_function
+import os
+import sys
+
+if __name__ == '__main__':
+  # Ensure that the parent directory is not in sys.path as otherwise at
+  # some point in Python 3 it may try to import "enum" from the nr package...
+  norm = lambda x: os.path.normpath(os.path.abspath(x))
+  dirname = os.path.dirname(norm(__file__))
+  sys.path[:] = [x for x in sys.path if norm(x) != dirname]
+  del norm, dirname
+
 import ctypes
 import io
 import json
-import os
 import re
 import shutil
 import shlex
 import subprocess
-import sys
 import tempfile
 import traceback
 
+
 if os.name == 'nt':
-  import win32api, win32con, win32event, win32process, win32gui
-  from win32com.shell.shell import ShellExecuteEx
-  from win32com.shell import shellcon
+  import ctypes.wintypes as wintypes
+  class winapi:
+    _WaitForSingleObject = ctypes.windll.kernel32.WaitForSingleObject
+    _WaitForSingleObject.restype = wintypes.DWORD
+    _WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+
+    @staticmethod
+    def WaitForSingleObject(handle, ms=0):
+      return winapi._WaitForSingleObject(handle, ms)
+
+    _GetExitCodeProcess = ctypes.windll.kernel32.GetExitCodeProcess
+    _GetExitCodeProcess.restype = wintypes.BOOL
+    _GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+
+    @staticmethod
+    def GetExitCodeProcess(handle):
+      result = wintypes.DWORD()
+      success = winapi._GetExitCodeProcess(handle, ctypes.byref(result))
+      if not success:
+        raise ctypes.WinError(ctypes.get_last_error())
+      return result.value
+
+    _MessageBox = ctypes.windll.user32.MessageBoxW
+    _MessageBox.restype = ctypes.c_int
+    _MessageBox.argtypes = [wintypes.HWND, wintypes.LPWSTR, wintypes.LPWSTR, wintypes.UINT]
+
+    @staticmethod
+    def MessageBox(hwnd, text, caption, type):
+      return winapi._MessageBox(hwnd, text, caption, type)
+
+    class _SHELLEXECUTEINFO(ctypes.Structure):
+      _fields_ = [
+        ('cbSize', wintypes.DWORD),
+        ('fMask', wintypes.ULONG),
+        ('hwnd', wintypes.HWND),
+        ('lpVerb', wintypes.LPCSTR),
+        ('lpFile', wintypes.LPCSTR),
+        ('lpParameters', wintypes.LPCSTR),
+        ('lpDirectory', wintypes.LPCSTR),
+        ('nShow', ctypes.c_int),
+        ('hInstApp', wintypes.HINSTANCE),
+        ('lpIDList', wintypes.LPVOID),
+        ('lpClass', wintypes.LPCSTR),
+        ('hkeyClass', wintypes.HKEY),
+        ('dwHotKey', wintypes.DWORD),
+        ('DUMMYUNIONNAME', wintypes.HANDLE),
+        ('hProcess', wintypes.HANDLE),
+      ]
+
+    _ShellExecuteEx = ctypes.windll.shell32.ShellExecuteEx
+    _ShellExecuteEx.restype = wintypes.BOOL
+    _ShellExecuteEx.argtypes = [ctypes.POINTER(_SHELLEXECUTEINFO)]
+
+    SW_HIDE = 0
+    SW_MAXIMIMIZE = 3
+    SW_MINIMIZE = 6
+    SW_RESTORE = 9
+    SW_SHOW = 5
+    SW_SHOWDEFAULT = 10
+    SW_SHOWMAXIMIZED = 3
+    SW_SHOWMINIMIZED = 2
+    SW_SHOWMINNOACTIVE = 7
+    SW_SHOWNA = 8
+    SW_SHOWNOACTIVE = 4
+    SW_SHOWNORMAL = 1
+
+    @staticmethod
+    def ShellExecuteEx(hwnd=None, verb='', file='', parameters=None,
+                       directory=None, show=SW_SHOW, mask=0):  # TODO: More parameters
+      data = winapi._SHELLEXECUTEINFO()
+      data.cbSize = ctypes.sizeof(data)
+      data.fMask = mask
+      data.hwnd = hwnd
+      data.lpVerb = verb.encode()
+      data.lpFile = file.encode()
+      data.lpParameters = parameters.encode()
+      data.lpDirectory = directory.encode()
+      data.nShow = show
+      data.hInstApp = None
+      data.lpIDList = None
+      data.lpClass = None
+      data.hkeyClass = None
+      data.dwHotKey = 0
+      data.DUMMYUNIONNAME = None
+      data.hProcess = None
+      result = winapi._ShellExecuteEx(ctypes.byref(data))
+      if not result:
+        raise ctypes.WinError(ctypes.get_last_error())
+      return {'hInstApp': data.hInstApp, 'hProcess': data.hProcess}
 
 
 def alert(*msg):
@@ -52,7 +148,7 @@ def alert(*msg):
   print(msg, file=sys.stderr)
   sys.stderr.flush()
   if os.name == 'nt':
-    win32gui.MessageBox(None, msg, "Python", 0)
+    winapi.MessageBox(None, msg, "Python", 0)
 
 
 def quote(s):
@@ -125,25 +221,26 @@ def _run_as_admin_windows(command, cwd, environ):
     # Create the windows elevated process that calls this file. This
     # file will then know what to do with the information from the
     # process data directory.
-    hProc = ShellExecuteEx(
-      lpFile=sys.executable,
-      lpVerb='runas',
-      lpParameters=' '.join(map(quote, [os.path.abspath(__file__), '--windows-process-data', datadir])),
-      lpDirectory=datadir,
-      fMask=64,
-      nShow=0)['hProcess']
+    hProc = winapi.ShellExecuteEx(
+      file=sys.executable,
+      verb='runas',
+      parameters=' '.join(map(quote, [os.path.abspath(__file__), '--windows-process-data', datadir])),
+      directory=datadir,
+      mask=64,
+      #show=0
+      )['hProcess']
 
     # Read the output from the process and write it to our stdout.
     with open(data['outfile'], 'rb+', 0) as outfile:
       while True:
-        hr = win32event.WaitForSingleObject(hProc, 40)
+        hr = winapi.WaitForSingleObject(hProc, 40)
         while True:
           line = outfile.readline()
           if not line: break
           sys.stdout.buffer.write(line)
         if hr != 0x102: break
 
-    return win32process.GetExitCodeProcess(hProc)
+    return winapi.GetExitCodeProcess(hProc)
 
   finally:
     try:
@@ -169,19 +266,25 @@ def _run_as_admin_windows_elevated(datadir):
     sys.exit(1)
 
 
-if __name__ == '__main__':
+def main(prog=None, argv=None):
   import argparse
-  parser = argparse.ArgumentParser()
+  parser = argparse.ArgumentParser(prog=prog)
   parser.add_argument('--windows-process-data',
     help='The path to a Windows process data directory. This is used to '
       'provide data for the elevated process since no environment variables '
       'can be via ShellExecuteEx().')
-  args = parser.parse_args()
+  args, unknown = parser.parse_known_args(argv)
 
   if args.windows_process_data:
     if not is_admin():
       alert("--windows-process-data can only be used in an elevated process.")
       sys.exit(1)
     sys.exit(_run_as_admin_windows_elevated(args.windows_process_data))
+  elif unknown:
+    sys.exit(run_as_admin(unknown))
   else:
-    parser.error('This file is not supposed to be executed directly.')
+    parser.print_usage()
+
+
+if __name__ == '__main__':
+  sys.exit(main())
