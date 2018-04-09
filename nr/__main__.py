@@ -23,7 +23,15 @@
 import argparse
 import sys
 
-commands = ['archive', 'grablicense', 'jiratime', 'py.blob', 'versionupgrade']
+commands = [
+  'admin',
+  'archive',
+  'grablicense',
+  'jiratime',
+  'py.blob',
+  'versionupgrade'
+]
+
 command_map = {
   'grablicense': 'tools.grablicense',
   'jiratime': 'tools.jiratime',
