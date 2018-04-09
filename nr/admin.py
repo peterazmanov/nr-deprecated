@@ -227,7 +227,7 @@ def _run_as_admin_windows(command, cwd, environ):
       parameters=' '.join(map(quote, [os.path.abspath(__file__), '--windows-process-data', datadir])),
       directory=datadir,
       mask=64,
-      #show=0
+      show=winapi.SW_HIDE
       )['hProcess']
 
     # Read the output from the process and write it to our stdout.
