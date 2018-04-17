@@ -69,14 +69,22 @@ class MemberOf(object):
   constructor and moved into the :attr:`Constructor.members` dictionary.
   """
 
-  def __init__(self, constructors, value=None):
+  def __init__(self, constructors=None, value=None, name=None):
     if isinstance(constructors, Constructor):
       constructors = [constructors]
     self.constructors = constructors
     self.value = value
+    self.name = name
+
+    if name:
+      for c in constructors:
+        c.members[name] = value
 
   def __call__(self, value):
-    self.value = value
+    if not self.name:
+      self.name = value.__name__
+    for c in self.constructors:
+      c.members[self.name] = value
     return self
 
   def update_constructors(self, attrname):
@@ -98,7 +106,6 @@ class _TypeMeta(type):
     # Update constructors from MemberOf declarations.
     for key, value in items(vars(subtype)):
       if isinstance(value, MemberOf):
-        value.update_constructors(key)
         delattr(subtype, key)
 
     # Bind constructors.
