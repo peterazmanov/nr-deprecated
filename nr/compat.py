@@ -76,6 +76,13 @@ if PY2:
   range = xrange
   from itertools import izip
 
+  exec_(
+    "def reraise(tp, value, tb=None):\n"
+    "  try:\n"
+    "    raise tp, value, tb\n"
+    "  finally:\n"
+    "    del tb\n")
+
   string_types = (str, unicode)
   text_type = unicode
   binary_type = str
@@ -110,6 +117,16 @@ else:
 
   def can_itervalues(d):
     return hasattr(d, 'valyes')
+
+  def reraise(tp, value, tb=None):
+    try:
+      if value is None:
+        value = tp()
+      if value.__traceback__ is not tb:
+        raise value.with_traceback(tb)
+      raise value
+    finally:
+      del value, tb
 
   exec_ = getattr(builtins, 'exec')
   range = range
