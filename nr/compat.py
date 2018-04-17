@@ -35,6 +35,15 @@ def with_metaclass(metaclass):
 if PY2:
   import __builtin__ as builtins
 
+  def items(d):
+    return d.items()
+
+  def keys(d):
+    return d.keys()
+
+  def values(d):
+    return d.values()
+
   def iteritems(d):
     return d.iteritems()
 
@@ -65,6 +74,7 @@ if PY2:
     exec("""exec code in globals, locals""")
 
   range = xrange
+  from itertools import izip
 
   string_types = (str, unicode)
   text_type = unicode
@@ -73,6 +83,15 @@ if PY2:
 
 else:
   import builtins
+
+  def items(d):
+    return list(d.items())
+
+  def keys(d):
+    return list(d.keys())
+
+  def values(d):
+    return list(d.values())
 
   def iteritems(d):
     return d.items()
@@ -94,6 +113,7 @@ else:
 
   exec_ = getattr(builtins, 'exec')
   range = range
+  izip = zip
 
   string_types = (str,)
   text_type = str
