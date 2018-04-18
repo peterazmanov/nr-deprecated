@@ -91,10 +91,12 @@ def main(prog=None, argv=None):
 
   seconds = 0
   for issue in issues:
+    resolution = issue['fields']['resolutiondate'].split('T')[0] \
+      if issue['fields']['resolutiondate'] else None
     timespent = issue['fields']['timespent'] or 0
     print('  {} -- {} ({}s, resolution={})'.format(
       issue['key'], issue['fields']['summary'], timespent,
-      issue['fields']['resolutiondate'].split('T')[0]))
+      resolution))
     seconds += timespent
 
   print('Time spent: {}s (={}h)'.format(seconds, seconds/3600))
