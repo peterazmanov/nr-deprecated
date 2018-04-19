@@ -105,6 +105,7 @@ class Future(object):
     self._completed = False
     self._cancelled = False
     self._result = None
+    self._done_callbacks = []
 
   def __repr__(self):
     with self._lock:
@@ -135,6 +136,25 @@ class Future(object):
         raise RuntimeError('Future object is already bound')
       self._worker = functools.partial(__fun, *args, **kwargs)
     return self
+
+  def add_done_callback(self, fun):
+    """
+    Adds the callback *fun* to the future so that it be invoked when the
+    future completed. The future completes either when it has been completed
+    after being started with the :meth:`start` method (independent of whether
+    an error occurs or not) or when either :meth:`set_result` or
+    :meth:`set_exception` is called.
+
+    If the future is already complete, *fun* will be invoked directly.
+
+    The function *fun* must accept the future as its sole argument.
+    """
+
+    with self._lock:
+      if self._completed:
+        fun()
+      else:
+        self._done_callbacks.append(fun)
 
   def enqueue(self):
     """
@@ -197,6 +217,22 @@ class Future(object):
       self._exc_info = exc_info
       self._completed = True
       self._lock.notify_all()
+      callbacks = self._prepare_done_callbacks()
+    try:
+      callbacks()
+    except:
+      traceback.print_exc()
+
+  # @requires_lock
+  def _prepare_done_callbacks(self):
+    callbacks, self._done_callbacks = self._done_callbacks, []
+    def invoker():
+      for callback in callbacks:
+        try:
+          callback(self)
+        except:
+          traceback.print_exc()
+    return invoker
 
   def enqueued(self):
     """
@@ -222,24 +258,6 @@ class Future(object):
 
     with self._lock:
       return self._completed
-
-  def cancel(self, mark_completed_as_cancelled=False):
-    """
-    Cancel the future. If the future has not been started yet, it will never
-    start running. If the future is already running, it will run until the
-    worker function exists. The worker function can check if the future has
-    been cancelled using the :meth:`cancelled` method.
-
-    If the future has already been completed, it will not be marked as
-    cancelled unless you set *mark_completed_as_cancelled* to :const:`True`.
-
-    :param mark_completed_as_cancelled: If this is :const:`True` and the
-      future has already completed, it will be marked as cancelled anyway.
-    """
-
-    with self._lock:
-      if not self._completed or mark_completed_as_cancelled:
-        self._cancelled = True
 
   def cancelled(self):
     """
@@ -276,23 +294,6 @@ class Future(object):
           return None
         raise self.Cancelled()
       return self._result
-
-  def set_result(self, result):
-    """
-    Allows you to set the result of the future without requiring the future
-    to actually be executed. This can be used if the result is available
-    before the future is run, allowing you to keep the future as the interface
-    for retrieving the result data.
-
-    :param result: The result of the future.
-    :raise RuntimeError: If the future is already enqueued.
-    """
-
-    with self._lock:
-      if self._enqueued:
-        raise RuntimeError('can not set result of enqueued Future')
-      self._result = result
-      self._completed = True
 
   def exception(self, timeout=None, do_raise=True):
     """
@@ -335,6 +336,45 @@ class Future(object):
         raise self.Cancelled()
       return self._exc_info
 
+  def cancel(self, mark_completed_as_cancelled=False):
+    """
+    Cancel the future. If the future has not been started yet, it will never
+    start running. If the future is already running, it will run until the
+    worker function exists. The worker function can check if the future has
+    been cancelled using the :meth:`cancelled` method.
+
+    If the future has already been completed, it will not be marked as
+    cancelled unless you set *mark_completed_as_cancelled* to :const:`True`.
+
+    :param mark_completed_as_cancelled: If this is :const:`True` and the
+      future has already completed, it will be marked as cancelled anyway.
+    """
+
+    with self._lock:
+      if not self._completed or mark_completed_as_cancelled:
+        self._cancelled = True
+      callbacks = self._prepare_done_callbacks()
+    callbacks()
+
+  def set_result(self, result):
+    """
+    Allows you to set the result of the future without requiring the future
+    to actually be executed. This can be used if the result is available
+    before the future is run, allowing you to keep the future as the interface
+    for retrieving the result data.
+
+    :param result: The result of the future.
+    :raise RuntimeError: If the future is already enqueued.
+    """
+
+    with self._lock:
+      if self._enqueued:
+        raise RuntimeError('can not set result of enqueued Future')
+      self._result = result
+      self._completed = True
+      callbacks = self._prepare_done_callbacks()
+    callbacks()
+
   def set_exception(self, exc_info):
     """
     This method allows you to set an exception in the future without requring
@@ -363,6 +403,8 @@ class Future(object):
         raise RuntimeError('can not set exception of enqueued Future')
       self._exc_info = exc_info
       self._completed = True
+      callbacks = self._prepare_done_callbacks()
+    callbacks()
 
   def wait(self, timeout=None, do_raise=False):
     """
