@@ -30,6 +30,18 @@ import traceback
 import sys
 
 
+def _get_timeout_begin(timeout):
+  if timeout is None:
+    return None
+  return time.clock()
+
+
+def _get_timeout_remainder(tbegin, timeout):
+  if timeout is None:
+    return None
+  return timeout - (time.clock() - tbegin)
+
+
 class Future(object):
   """
   This class represents a task that can be executed in a separate thread.
@@ -453,8 +465,8 @@ class ThreadPool(object):
     self._workers = []
     self._daemon = daemon
     self._max_workers = max_workers
-    self._num_running = 0
     self._queue = collections.deque()
+    self._running = collections.deque()
     self._lock = threading.Condition()
     self._shutdown = False
 
@@ -472,8 +484,11 @@ class ThreadPool(object):
 
     future.enqueue()
     with self._lock:
+      if self._shutdown:
+        raise RuntimeError('ThreadPool has been shut down and can no '
+          'longer accept futures.')
       self._queue.append(future)
-      if self._num_running == len(self._workers):
+      if len(self._running) == len(self._workers):
         self._new_worker()
       self._lock.notify_all()
 
@@ -486,28 +501,51 @@ class ThreadPool(object):
     self.enqueue(future)
     return future
 
-  def cancel(self):
+  def cancel(self, cancel_running=True, mark_completed_as_cancelled=False):
     """
-    Cancel all futures queued in the pool.
+    Cancel all futures queued in the pool. If *cancel_running* is True,
+    futures that are currently running in the pool are cancelled as well.
     """
 
     with self._lock:
       for future in self._queue:
-        future.cancel()
+        future.cancel(mark_completed_as_cancelled)
+      if cancel_running:
+        for future in self._running:
+          future.cancel(mark_completed_as_cancelled)
       self._queue.clear()
 
   def shutdown(self, wait=True):
     """
     Shut down the pool. If *wait* is True, it will wait until all futures
-    are completed.
+    are completed. Alternatively, you can use the #wait() method to wait
+    with timeout supported.
     """
 
     with self._lock:
       self._shutdown = True
       self._lock.notify_all()
     if wait:
-      for worker in self._workers:
-        worker.join()
+      self.wait()
+
+  def wait(self, timeout=None):
+    """
+    Wait until all futures are completed. You should call this method only
+    after calling #shutdown(). Returns #False if all futures are complete,
+    #False if there are still some running.
+    """
+
+    tbegin = _get_timeout_begin(timeout)
+    with self._lock:
+      while self._queue or self._running:
+        remainder = _get_timeout_remainder(tbegin, timeout)
+        if remainder is not None and remainder <= 0.0:
+          return False  # timeout
+        self._lock.wait(remainder)
+      if self._shutdown:
+        for worker in self._workers:
+          worker.join()
+    return True
 
   def _new_worker(self):
     with self._lock:
@@ -530,10 +568,12 @@ class ThreadPool(object):
             if self._master._shutdown:
               return
             self._master._lock.wait()
-          self._master._num_running += 1
           future = self._master._queue.popleft()
+          self._master._running.append(future)
+          self._master._lock.notify_all()
         try:
           future.start(as_thread=False)
         finally:
           with self._master._lock:
-            self._master._num_running -= 1
+            self._master._running.remove(future)
+            self._master._lock.notify_all()
