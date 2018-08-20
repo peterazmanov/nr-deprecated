@@ -31,7 +31,7 @@ from setuptools import setup, find_packages
 
 # parse_requirements() interface has changed in Pip 6.0
 #if pip.__version__ >= '6.0':
-parse_requirements = partial(parse_requirements, session=pip.download.PipSession())
+parse_requirements = partial(parse_requirements, session=pip._internal.download.PipSession())
 
 def readme():
   if os.path.isfile('README.md'):
