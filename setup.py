@@ -22,16 +22,7 @@ import pip
 import os
 import sys
 
-from functools import partial
-try: # for pip >= 10
-    from pip._internal.req import parse_requirements
-except ImportError: # for pip <= 9.0.3
-    from pip.req import parse_requirements
 from setuptools import setup, find_packages
-
-# parse_requirements() interface has changed in Pip 6.0
-#if pip.__version__ >= '6.0':
-parse_requirements = partial(parse_requirements, session=pip._internal.download.PipSession())
 
 def readme():
   if os.path.isfile('README.md'):
@@ -55,5 +46,5 @@ setup(
   author = 'Niklas Rosenstein',
   author_email = 'rosensteinniklas@gmail.com',
   packages = find_packages(),
-  install_requires = [str(x.req) for x in parse_requirements('requirements.txt')],
+  install_requires = [],
 )
